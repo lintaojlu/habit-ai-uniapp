@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "HabitAI",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "reward-card": "../../components/reward-card"
+  }
+}

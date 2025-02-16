@@ -1,0 +1,213 @@
+
+.container {
+  background-color: #fff;
+  box-sizing: border-box;
+  color: #2c3e50;
+  min-height: 100vh;
+  padding: 20rpx 40rpx;
+}
+.calendar-section {
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,.05),0 2rpx 8rpx rgba(0,0,0,.02);
+  margin-bottom: 30rpx;
+  padding: 30rpx;
+}
+.month-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30rpx;
+}
+.month-header .month-title {
+  color: #2c3e50;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+.month-header .month-controls {
+  display: flex;
+  gap: 30rpx;
+}
+.month-header .month-controls .arrow {
+  align-items: center;
+  background: #edf0f5;
+  border-radius: 30rpx;
+  color: #2c3e50;
+  display: flex;
+  font-size: 28rpx;
+  height: 60rpx;
+  justify-content: center;
+  transition: all .2s ease;
+  width: 60rpx;
+}
+.month-header .month-controls .arrow:active {
+  opacity: .9;
+  transform: scale(.95);
+}
+.calendar-grid .weekday-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20rpx;
+}
+.calendar-grid .weekday-row .weekday {
+  color: #5c6b7a;
+  font-size: 24rpx;
+  text-align: center;
+  width: 14%;
+}
+.calendar-grid .days-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+.calendar-grid .days-grid .day-cell {
+  aspect-ratio: 1;
+  background: #e8e8e8;
+  border-radius: 16rpx;
+  box-sizing: border-box;
+  padding: 12rpx;
+  position: relative;
+  transition: all .2s ease;
+  width: calc(14.28% - 8rpx);
+}
+.calendar-grid .days-grid .day-cell:active {
+  opacity: .9;
+  transform: scale(.95);
+}
+.calendar-grid .days-grid .day-cell:not(.isCurrentMonth) {
+  opacity: .5;
+}
+.calendar-grid .days-grid .day-cell .day-number {
+  color: #5c6b7a;
+  font-size: 24rpx;
+  left: 8rpx;
+  position: absolute;
+  top: 8rpx;
+}
+.calendar-grid .days-grid .day-cell .habits-count {
+  bottom: 8rpx;
+  position: absolute;
+  right: 8rpx;
+}
+.calendar-grid .days-grid .day-cell .habits-count .count {
+  background: #ff9f0a;
+  border-radius: 16rpx;
+  color: #fff;
+  display: inline-block;
+  font-size: 20rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  min-width: 32rpx;
+  opacity: 1;
+  padding: 0 8rpx;
+  text-align: center;
+}
+.calendar-grid .days-grid .day-cell.today {
+  border: 2rpx solid #ff9f0a;
+  opacity: 1;
+}
+.calendar-grid .days-grid .day-cell.today::after {
+  background-color: #ff9f0a;
+  border-radius: 50%;
+  bottom: -16rpx;
+  content: "";
+  height: 8rpx;
+  left: 50%;
+  opacity: 1;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 8rpx;
+}
+.calendar-grid .days-grid .day-cell.selected {
+  background: #ff9f0a;
+  opacity: 1;
+}
+.calendar-grid .days-grid .day-cell.selected .day-number {
+  color: #fff;
+}
+.calendar-grid .days-grid .day-cell.selected .habits-count .count {
+  background: #fff;
+  color: #ff9f0a;
+  opacity: 1;
+}
+.calendar-grid .days-grid .day-cell.not-current-month {
+  background: #edf0f5;
+  opacity: .6;
+  pointer-events: none;
+}
+.calendar-grid .days-grid .day-cell.not-current-month .day-number {
+  color: #999;
+}
+.notes-section {
+  margin-top: 30rpx;
+}
+.notes-section .section-title {
+  color: #2c3e50;
+  display: block;
+  font-size: 32rpx;
+  font-weight: 500;
+  margin-bottom: 20rpx;
+}
+.notes-section .notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.notes-section .notes-list .tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+.notes-section .notes-list .tags-wrapper .habit-tag {
+  border-radius: 100rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  padding: 8rpx 20rpx;
+}
+.notes-section .notes-list .note-card {
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,.05),0 2rpx 8rpx rgba(0,0,0,.02);
+  padding: 30rpx;
+}
+.notes-section .notes-list .note-card .note-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+.notes-section .notes-list .note-card .note-header .habit-name {
+  background: rgba(0,0,0,.05);
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  padding: 8rpx 16rpx;
+}
+.notes-section .notes-list .note-card .note-header .note-date {
+  color: #5c6b7a;
+  font-size: 24rpx;
+}
+.notes-section .notes-list .note-card .note-content {
+  color: #2c3e50;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+.notes-section .empty-notes {
+  align-items: center;
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,.05),0 2rpx 8rpx rgba(0,0,0,.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60rpx 0;
+}
+.notes-section .empty-notes .empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+.notes-section .empty-notes .empty-message {
+  color: #5c6b7a;
+  font-size: 28rpx;
+}
