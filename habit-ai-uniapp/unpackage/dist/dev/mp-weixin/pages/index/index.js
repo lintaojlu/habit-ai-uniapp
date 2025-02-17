@@ -9,7 +9,6 @@ const _sfc_main = common_vendor.defineComponent({
     return {
       weekDays: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
       habits: [],
-      monthHabits: [],
       currentYear: 0,
       currentMonth: 0,
       yearWeek: 0,
@@ -20,11 +19,9 @@ const _sfc_main = common_vendor.defineComponent({
       rewardStats: null,
       currentHabit: null,
       isNoInteraction: false,
-      viewMode: "week",
       touchStartX: 0,
       touchStartTime: 0,
       translateX: 0,
-      monthTranslateX: 0,
       isOrderMode: false,
       flippedCards: {},
       expandedCards: {},
@@ -270,7 +267,7 @@ const _sfc_main = common_vendor.defineComponent({
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("log", "at pages/index/index.vue:538", "ActionSheet 关闭", err);
+          common_vendor.index.__f__("log", "at pages/index/index.vue:475", "ActionSheet 关闭", err);
         }
       });
     },
@@ -404,7 +401,7 @@ const _sfc_main = common_vendor.defineComponent({
           this.translateX = 0;
         }, 50);
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:690", "获取窗口信息失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:627", "获取窗口信息失败:", error);
         this.viewMode = mode;
         this.translateX = 0;
       }
@@ -696,7 +693,7 @@ const _sfc_main = common_vendor.defineComponent({
               });
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1037", "Share file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:974", "Share file error:", err);
               common_vendor.index.showToast({
                 title: "导出失败",
                 icon: "none"
@@ -704,14 +701,14 @@ const _sfc_main = common_vendor.defineComponent({
             }
           });
         } catch (err) {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1045", "File operation error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:982", "File operation error:", err);
           common_vendor.index.showToast({
             title: "导出失败",
             icon: "none"
           });
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1052", "Export error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:989", "Export error:", error);
         common_vendor.index.showToast({
           title: "导出失败",
           icon: "none"
@@ -756,7 +753,7 @@ const _sfc_main = common_vendor.defineComponent({
           }
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1099", "Import error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1036", "Import error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -796,7 +793,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1145", "Merge error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1082", "Merge error:", error);
         common_vendor.index.showToast({
           title: "合并失败",
           icon: "none"
@@ -812,7 +809,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1162", "Overwrite error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1099", "Overwrite error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -862,7 +859,7 @@ const _sfc_main = common_vendor.defineComponent({
                 }
                 this.performImport(importData);
               } catch (parseError) {
-                common_vendor.index.__f__("error", "at pages/index/index.vue:1214", "Parse error:", parseError);
+                common_vendor.index.__f__("error", "at pages/index/index.vue:1151", "Parse error:", parseError);
                 common_vendor.index.showToast({
                   title: "文件格式错误",
                   icon: "none"
@@ -870,7 +867,7 @@ const _sfc_main = common_vendor.defineComponent({
               }
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1222", "Read file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:1159", "Read file error:", err);
               common_vendor.index.showToast({
                 title: "读取文件失败",
                 icon: "none"
@@ -879,7 +876,7 @@ const _sfc_main = common_vendor.defineComponent({
           });
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1231", "Choose file error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:1168", "Choose file error:", err);
           const systemInfo = common_vendor.index.getSystemInfoSync();
           const isIOS = systemInfo.platform === "ios";
           if (isIOS) {
@@ -950,21 +947,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: common_vendor.t(_ctx.formatNumber(_ctx.hours)),
     j: common_vendor.t(_ctx.formatNumber(_ctx.minutes)),
     k: common_vendor.t(_ctx.formatNumber(_ctx.seconds)),
-    l: common_vendor.t(_ctx.habits.length),
-    m: common_vendor.t(_ctx.getTodayCompletedCount),
-    n: _ctx.isOrderMode
+    l: `${_ctx.getTodayCompletedCount / _ctx.habits.length * 100}%`,
+    m: _ctx.isOrderMode
   }, _ctx.isOrderMode ? {
-    o: common_vendor.o((...args) => _ctx.completeOrder && _ctx.completeOrder(...args))
-  } : {
-    p: _ctx.viewMode === "week" ? 1 : "",
-    q: common_vendor.o(($event) => _ctx.switchView("week")),
-    r: _ctx.viewMode === "month" ? 1 : "",
-    s: common_vendor.o(($event) => _ctx.switchView("month"))
-  }, {
-    t: common_vendor.o((...args) => _ctx.showBackupOptions && _ctx.showBackupOptions(...args)),
-    v: _ctx.habits.length === 0
+    n: common_vendor.o((...args) => _ctx.completeOrder && _ctx.completeOrder(...args))
+  } : {}, {
+    o: _ctx.habits.length === 0
   }, _ctx.habits.length === 0 ? {} : {}, {
-    w: common_vendor.f(_ctx.habits, (habit, index, i0) => {
+    p: common_vendor.f(_ctx.habits, (habit, index, i0) => {
       return common_vendor.e({
         a: common_vendor.t(habit.icon),
         b: habit.color,
@@ -1016,39 +1006,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         y: common_vendor.o(($event) => !_ctx.isOrderMode && _ctx.handleCardTouchEnd(habit), habit.id)
       });
     }),
-    x: _ctx.isOrderMode,
-    y: _ctx.isOrderMode ? 1 : "",
-    z: _ctx.isOrderMode ? 1 : "",
-    A: _ctx.viewMode === "week",
-    B: `translateX(${_ctx.translateX}px)`,
-    C: common_vendor.f(_ctx.habits, (habit, index, i0) => {
-      return {
-        a: common_vendor.t(habit.icon),
-        b: habit.color,
-        c: common_vendor.t(habit.title),
-        d: common_vendor.f(_ctx.getDaysInMonth(), (day, dayIndex, i1) => {
-          return {
-            a: common_vendor.t(dayIndex + 1),
-            b: dayIndex,
-            c: _ctx.isCompletedForMonthDay(habit, dayIndex + 1) ? 1 : "",
-            d: _ctx.isMonthToday(dayIndex + 1) ? 1 : "",
-            e: _ctx.isFutureMonthDay(dayIndex + 1) ? 1 : "",
-            f: common_vendor.o(($event) => _ctx.handleMonthDayClick(habit, dayIndex + 1), dayIndex)
-          };
-        }),
-        e: common_vendor.t(_ctx.getMonthCompletionCount(habit)),
-        f: common_vendor.t(_ctx.getMonthCompletionRate(habit)),
-        g: habit.id
-      };
-    }),
-    D: _ctx.isOrderMode ? 1 : "",
-    E: _ctx.viewMode === "month",
-    F: `translateX(${_ctx.translateX}px)`,
-    G: common_vendor.o((...args) => _ctx.handleTouchStart && _ctx.handleTouchStart(...args)),
-    H: common_vendor.o((...args) => _ctx.handleTouchEnd && _ctx.handleTouchEnd(...args)),
-    I: !_ctx.isOrderMode
+    q: _ctx.isOrderMode,
+    r: _ctx.isOrderMode ? 1 : "",
+    s: _ctx.isOrderMode ? 1 : "",
+    t: `translateX(${_ctx.translateX}px)`,
+    v: common_vendor.o((...args) => _ctx.handleTouchStart && _ctx.handleTouchStart(...args)),
+    w: common_vendor.o((...args) => _ctx.handleTouchEnd && _ctx.handleTouchEnd(...args)),
+    x: !_ctx.isOrderMode
   }, !_ctx.isOrderMode ? {
-    J: common_vendor.o((...args) => _ctx.addHabit && _ctx.addHabit(...args))
+    y: common_vendor.o((...args) => _ctx.addHabit && _ctx.addHabit(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

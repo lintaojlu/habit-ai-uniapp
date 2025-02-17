@@ -27,39 +27,11 @@
       </view>
       <view class="header-row">
         <view class="habit-stats">
-          <view class="stat-item">
-            <text class="stat-value">{{ habits.length }}</text>
-            <text class="stat-label">总习惯</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{ getTodayCompletedCount }}</text>
-            <text class="stat-label">今日已打卡</text>
+          <view class="progress-bar">
+            <view class="progress-fill" :style="{ width: `${(getTodayCompletedCount / habits.length) * 100}%` }"></view>
           </view>
         </view>
         <view v-if="isOrderMode" class="complete-order-btn" @tap="completeOrder">完成排序</view>
-        <view v-else class="view-switch">
-          <view
-              class="switch-btn"
-              :class="{ active: viewMode === 'week' }"
-              @tap="switchView('week')"
-          >
-            <text class="icon">📅</text>
-            <text>周视图</text>
-          </view>
-          <view
-              class="switch-btn"
-              :class="{ active: viewMode === 'month' }"
-              @tap="switchView('month')"
-          >
-            <text class="icon">📊</text>
-            <text>月视图</text>
-          </view>
-        </view>
-        <view class="backup-actions">
-          <button class="backup-btn" @tap="showBackupOptions">
-            <text class="icon">📤</text>
-          </button>
-        </view>
       </view>
     </view>
 
@@ -69,10 +41,16 @@
       <text class="empty-desc">点击右下角的加号按钮添加你想要培养的习惯</text>
     </view>
 
+    <view class="ai-message">
+      <view class="ai-message-card">
+        <text class="ai-message-icon">👩🏻‍</text>
+        <text class="ai-message-content">检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！</text>
+      </view>
+    </view>
+
     <view class="view-container" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
       <view
           class="view-page habits-list"
-          v-show="viewMode === 'week'"
           :style="{ transform: `translateX(${translateX}px)` }"
       >
         <view
@@ -189,50 +167,12 @@
         </view>
       </view>
 
-      <!-- 月视图 -->
-      <view
-          class="view-page month-habits-grid"
-          v-show="viewMode === 'month'"
-          :style="{ transform: `translateX(${translateX}px)` }"
-      >
-        <view
-            v-for="(habit, index) in habits"
-            :key="habit.id"
-            class="month-habit-card"
-            :class="{ 'no-interaction': isOrderMode }"
-        >
-          <view class="habit-info">
-            <view class="habit-icon" :style="{ 'background-color': habit.color }">
-              <text class="emoji-icon">{{ habit.icon }}</text>
-            </view>
-            <text class="habit-title">{{ habit.title }}</text>
-          </view>
-          <view class="heatmap">
-            <view
-                v-for="(day, dayIndex) in getDaysInMonth()"
-                :key="dayIndex"
-                class="heatmap-cell"
-                :class="{
-                completed: isCompletedForMonthDay(habit, dayIndex + 1),
-                today: isMonthToday(dayIndex + 1),
-                future: isFutureMonthDay(dayIndex + 1)
-              }"
-                @tap.stop="handleMonthDayClick(habit, dayIndex + 1)"
-            >{{ dayIndex + 1 }}
-            </view>
-          </view>
-          <view class="month-stats">
-            <text class="stat">完成 {{ getMonthCompletionCount(habit) }} 天</text>
-            <text class="completion-rate">{{ getMonthCompletionRate(habit) }}%</text>
-          </view>
-        </view>
       </view>
     </view>
 
     <view class="add-button" v-if="!isOrderMode" @tap="addHabit">
       <text class="plus">+</text>
     </view>
-  </view>
 </template>
 
 <script>
@@ -247,7 +187,6 @@ export default defineComponent({
     return {
       weekDays: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
       habits: [],
-      monthHabits: [],
       currentYear: 0,
       currentMonth: 0,
       yearWeek: 0,
@@ -258,11 +197,9 @@ export default defineComponent({
       rewardStats: null,
       currentHabit: null,
       isNoInteraction: false,
-      viewMode: 'week',
       touchStartX: 0,
       touchStartTime: 0,
       translateX: 0,
-      monthTranslateX: 0,
       isOrderMode: false,
       flippedCards: {},
       expandedCards: {},
@@ -1288,6 +1225,56 @@ export default defineComponent({
   padding: 20rpx 40rpx;
 }
 
+.container, .ai-message {
+  box-sizing: border-box;
+}
+
+.ai-message {
+  background: #fff;
+  left: 0;
+  padding: 20rpx 40rpx 0;
+  position: fixed;
+  right: 0;
+  top: 200rpx;
+  width: 100%;
+  z-index: 100;
+}
+
+.ai-message .ai-message-card {
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, .05), 0 2rpx 8rpx rgba(0, 0, 0, .02);
+  padding: 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  transition: all 0.3s ease;
+}
+
+.ai-message .ai-message-card:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.ai-message .ai-message-card .ai-message-icon {
+  font-size: 40rpx;
+  color: #fff;
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-message .ai-message-card .ai-message-content {
+  color: #2c3e50;
+  font-size: 28rpx;
+  line-height: 1.5;
+  flex: 1;
+}
+
 .container, .header {
   box-sizing: border-box;
 }
@@ -1348,6 +1335,7 @@ export default defineComponent({
   position: relative;
   text-align: center;
   transition: all .3s ease;
+  width: 100%;
 }
 
 .date-info .flip-clock .time-unit::before {
@@ -1381,25 +1369,26 @@ export default defineComponent({
 
 .habit-stats {
   gap: 40rpx;
+  width: 100%;
+  margin-top: 20rpx;
 }
 
-.habit-stats .stat-item {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
+.habit-stats .progress-bar {
+  background: #edf0f5;
+  border-radius: 16rpx;
+  height: 12rpx;
+  width: 100%;
+  overflow: hidden;
 }
 
-.habit-stats .stat-item .stat-value {
-  color: #ff9f0a;
-  font-size: 36rpx;
-  font-weight: 700;
+.habit-stats .progress-bar .progress-fill {
+  background: #ff9f0a;
+  border-radius: 16rpx;
+  height: 100%;
+  transition: width 0.3s ease;
+  width: 0;
 }
 
-.habit-stats .stat-item .stat-label {
-  color: #5c6b7a;
-  font-size: 24rpx;
-  margin-top: 4rpx;
-}
 
 .habits-list {
   perspective: 1000px;
@@ -1572,7 +1561,7 @@ export default defineComponent({
 
 .habits-list .habit-card .habit-header .more-actions .more-icon {
   color: #5c6b7a;
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 700;
 }
 
@@ -1751,155 +1740,11 @@ export default defineComponent({
   }
 }
 
-.view-switch {
-  display: flex;
-  gap: 20rpx;
-}
 
-.view-switch .switch-btn {
-  align-items: center;
-  background: #f5f7fa;
-  border-radius: 30rpx;
-  color: #5c6b7a;
-  display: flex;
-  font-size: 24rpx;
-  gap: 10rpx;
-  padding: 10rpx 20rpx;
-}
-
-.view-switch .switch-btn .icon {
-  font-size: 28rpx;
-}
-
-.view-switch .switch-btn.active {
-  background: #ff9f0a;
-  color: #fff;
-}
-
-.view-switch .switch-btn:active {
-  opacity: .9;
-}
-
-.month-habits-grid {
-  display: grid;
-  gap: 20rpx;
-  grid-template-columns: repeat(2, 1fr);
-  padding: 20rpx 0;
-}
-
-.month-habit-card {
-  background: #f5f7fa;
-  border-radius: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, .05), 0 2rpx 8rpx rgba(0, 0, 0, .02);
-  display: flex;
-  flex-direction: column;
-  gap: 15rpx;
-  padding: 20rpx;
-}
-
-.month-habit-card:active {
-  opacity: .9;
-  transform: scale(.98);
-}
-
-.month-habit-card .habit-info {
-  gap: 10rpx;
-}
-
-.month-habit-card .habit-info, .month-habit-card .habit-info .habit-icon {
-  align-items: center;
-  display: flex;
-}
-
-.month-habit-card .habit-info .habit-icon {
-  background-color: #ff9f0a;
-  border-radius: 12rpx;
-  height: 50rpx;
-  justify-content: center;
-  width: 50rpx;
-}
-
-.month-habit-card .habit-info .habit-icon .emoji-icon {
-  color: #fff;
-  font-size: 30rpx;
-}
-
-.month-habit-card .habit-info .habit-title {
-  color: #2c3e50;
-  flex: 1;
-  font-size: 24rpx;
-  max-width: 120rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.month-habit-card .heatmap {
-  display: grid;
-  gap: 4rpx;
-  grid-template-columns: repeat(7, 1fr);
-  padding: 10rpx 0;
-}
-
-.month-habit-card .heatmap .heatmap-cell {
-  align-items: center;
-  aspect-ratio: 1;
-  background: #edf0f5;
-  border-radius: 10rpx;
-  color: #5c6b7a;
-  display: flex;
-  font-size: 20rpx;
-  justify-content: center;
-}
-
-.month-habit-card .heatmap .heatmap-cell.completed {
-  background: #ff9f0a;
-  box-shadow: 0 0 8rpx rgba(255, 159, 10, .3);
-  color: #fff !important;
-}
-
-.month-habit-card .heatmap .heatmap-cell.today {
-  border: 2rpx solid #ff9f0a;
-  color: #ff9f0a;
-}
-
-.month-habit-card .heatmap .heatmap-cell.today.completed {
-  background: #ff9f0a !important;
-  border-color: #ff9f0a !important;
-  box-shadow: 0 0 8rpx rgba(255, 159, 10, .3);
-  color: #fff !important;
-}
-
-.month-habit-card .heatmap .heatmap-cell.future {
-  opacity: .5;
-}
-
-.month-habit-card .heatmap .heatmap-cell:active {
-  transform: scale(.9);
-}
-
-.month-habit-card .month-stats {
-  align-items: center;
-  border-top: 2rpx solid #edf0f5;
-  display: flex;
-  justify-content: space-between;
-  padding-top: 10rpx;
-}
-
-.month-habit-card .month-stats .stat {
-  color: #5c6b7a;
-  font-size: 22rpx;
-}
-
-.month-habit-card .month-stats .completion-rate {
-  color: #ff9f0a;
-  font-size: 24rpx;
-  font-weight: 700;
-}
 
 .view-container {
   height: calc(100vh - 220rpx);
-  margin-top: 220rpx;
+  margin-top: 400rpx;
   overflow-y: auto;
   position: relative;
 }
