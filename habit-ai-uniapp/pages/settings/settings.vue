@@ -1,38 +1,57 @@
 <template>
   <view class="container">
     <!-- 用户信息区域 -->
-    <view class="user-info-section">
+    <view class="settings-card user-info-section">
       <view class="avatar-wrapper">
-        <image class="avatar" :src="userInfo.avatarUrl || '/static/default-avatar.png'" mode="aspectFill" />
+        <image class="avatar" :src="userInfo.avatarUrl || '/static/default-avatar.png'" mode="aspectFill"/>
       </view>
-      <text class="nickname">{{ userInfo.nickName || '未设置昵称' }}</text>
+      <view class="user-info">
+        <text class="nickname">{{ userInfo.nickName || '未设置昵称' }}</text>
+      </view>
     </view>
 
     <!-- AI设置区域 -->
-    <view class="settings-section">
-      <view class="section-title">AI 设置</view>
-      <view class="setting-item">
-        <text class="setting-label">AI 角色</text>
-        <picker class="role-picker" :value="selectedRoleIndex" :range="aiRoles" @change="onRoleChange">
-          <view class="picker-value">{{ aiRoles[selectedRoleIndex] }}</view>
-        </picker>
+    <view class="settings-card setting-item">
+      <view class="setting-left">
+        <text class="setting-icon">🤖</text>
+        <text class="setting-label">角色设置</text>
       </view>
+      <picker class="role-picker" :value="selectedRoleIndex" :range="aiRoles" @change="onRoleChange">
+        <view class="picker-value">
+          {{ aiRoles[selectedRoleIndex] }}
+          <text class="arrow">></text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 隐私设置 -->
+    <view class="settings-card setting-item">
+      <view class="setting-left">
+        <text class="setting-icon">🔒</text>
+        <text class="setting-label">隐私设置</text>
+      </view>
+      <text class="arrow">></text>
     </view>
 
     <!-- 用户反馈区域 -->
-    <view class="settings-section">
-      <view class="section-title">反馈与支持</view>
-      <view class="setting-item feedback-button" @tap="onFeedback">
-        <text class="setting-label">意见反馈</text>
-        <text class="arrow">></text>
+    <view class="settings-card setting-item">
+      <view class="setting-left">
+        <text class="setting-icon">📢</text>
+        <text class="setting-label">反馈与支持</text>
       </view>
+      <text class="arrow" @tap="onFeedback">></text>
     </view>
 
     <!-- 退出登录按钮 -->
-    <view class="logout-section">
-      <button class="logout-button" @tap="onLogout">退出登录</button>
+    <view class="settings-card setting-item">
+      <view class="setting-left">
+        <text class="setting-icon">🚪</text>
+        <text class="setting-label logout">退出登录</text>
+      </view>
+      <text class="arrow" @tap="onLogout">></text>
     </view>
   </view>
+
 </template>
 
 <script>
@@ -108,74 +127,87 @@ export default {
 
 <style>
 .container {
-  padding: 40rpx;
-}
-
-.user-info-section {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 60rpx;
-  padding: 40rpx 0;
-}
-
-.avatar-wrapper {
-  border-radius: 50%;
-  height: 160rpx;
-  margin-bottom: 20rpx;
-  overflow: hidden;
-  width: 160rpx;
-}
-
-.avatar {
-  height: 100%;
-  width: 100%;
-}
-
-.nickname {
-  color: #2c3e50;
-  font-size: 32rpx;
-  font-weight: 600;
+  padding: 30rpx;
+  background: #f5f7fa;
+  min-height: 100vh;
 }
 
 .settings-section {
-  background: #fff;
-  border-radius: 20rpx;
-  margin-bottom: 40rpx;
-  padding: 30rpx;
+  background: #f5f7fa;
 }
 
-.section-title {
-  color: #5c6b7a;
-  font-size: 28rpx;
+.settings-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
   margin-bottom: 20rpx;
 }
 
-.setting-item {
-  align-items: center;
+.user-info-section {
+  background: var(--theme-color);
   display: flex;
+  align-items: center;
+  padding: 40rpx;
+  height: 200rpx;
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.avatar-wrapper {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+}
+
+.user-info {
+  margin-left: 30rpx;
+  color: #fff;
+}
+
+.nickname {
+  font-size: 36rpx;
+  font-weight: 600;
+  margin-bottom: 10rpx;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 20rpx 0;
+  min-height: 100rpx;
+}
+
+.setting-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.setting-icon {
+  font-size: 40rpx;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
 .setting-label {
-  color: #2c3e50;
   font-size: 30rpx;
-}
-
-.role-picker {
-  flex: 1;
-  margin-left: 20rpx;
-}
-
-.picker-value {
   color: #2c3e50;
-  font-size: 30rpx;
-  text-align: right;
 }
 
-.feedback-button {
-  cursor: pointer;
+.setting-desc {
+  font-size: 24rpx;
+  color: #5c6b7a;
 }
 
 .arrow {
@@ -183,21 +215,15 @@ export default {
   font-size: 30rpx;
 }
 
-.logout-section {
-  margin-top: 80rpx;
-  padding: 0 40rpx;
+.picker-value {
+  color: #5c6b7a;
+  font-size: 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
 }
 
-.logout-button {
-  background: var(--theme-color);  /* 修改为使用主题色变量 */
-  border-radius: 20rpx;
-  color: #fff;
-  font-size: 32rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-}
-
-.logout-button:active {
-  opacity: 0.9;
+.logout .setting-label {
+  color: #ff3b30;
 }
 </style>
