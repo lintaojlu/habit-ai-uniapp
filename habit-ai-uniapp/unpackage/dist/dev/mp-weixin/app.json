@@ -1,8 +1,11 @@
 {
   "pages": [
+    "pages/login/login",
+    "pages/register/register",
     "pages/index/index",
     "pages/add-habit/add-habit",
-    "pages/overview/overview"
+    "pages/overview/overview",
+    "pages/settings/settings"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -11,7 +14,7 @@
   },
   "tabBar": {
     "color": "#333333",
-    "selectedColor": "#FF9F0A",
+    "selectedColor": "var(--theme-color)",
     "backgroundColor": "#EDF0F5",
     "borderStyle": "white",
     "list": [
@@ -21,7 +24,11 @@
       },
       {
         "pagePath": "pages/overview/overview",
-        "text": "总览"
+        "text": "统计"
+      },
+      {
+        "pagePath": "pages/settings/settings",
+        "text": "设置"
       }
     ]
   },

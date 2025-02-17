@@ -14,15 +14,12 @@
     <view class="header">
       <view class="date-info">
         <view class="date-content">
-          <text class="year">{{ currentYear }}年第{{ yearWeek }}周</text>
-          <text class="month-week">{{ currentMonth }}月第{{ monthWeek }}周</text>
+          <text class="year">{{ currentYear }}年{{ currentMonth }}月第{{ monthWeek }}周</text>
         </view>
         <view class="flip-clock">
-          <text class="time-unit">{{ formatNumber(hours) }}</text>
-          <text class="time-separator">:</text>
-          <text class="time-unit">{{ formatNumber(minutes) }}</text>
-          <text class="time-separator">:</text>
-          <text class="time-unit">{{ formatNumber(seconds) }}</text>
+          <text class="streak-icon">🔥</text>
+          <text class="time-unit">{{ currentStreak }}</text>
+          <text class="streak-label">天</text>
         </view>
       </view>
       <view class="header-row">
@@ -33,19 +30,18 @@
         </view>
         <view v-if="isOrderMode" class="complete-order-btn" @tap="completeOrder">完成排序</view>
       </view>
+      <view class="ai-message">
+        <view class="ai-message-card">
+          <text class="ai-message-icon">👩🏻‍</text>
+          <text class="ai-message-content">检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！</text>
+        </view>
+      </view>
     </view>
 
     <view class="empty-state" v-if="habits.length === 0">
       <text class="empty-icon">📝</text>
       <text class="empty-title">开始培养新习惯</text>
       <text class="empty-desc">点击右下角的加号按钮添加你想要培养的习惯</text>
-    </view>
-
-    <view class="ai-message">
-      <view class="ai-message-card">
-        <text class="ai-message-icon">👩🏻‍</text>
-        <text class="ai-message-content">检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！</text>
-      </view>
     </view>
 
     <view class="view-container" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
@@ -120,7 +116,7 @@
                 </view>
               </view>
               <view class="expand-button" @tap.stop="toggleCardExpand(habit.id)">
-                <text class="expand-text">{{ expandedCards[habit.id] ? '收起心得' : '查看心得' }}</text>
+                <text class="expand-text">{{ expandedCards[habit.id] ? '收起历程' : '查看历程' }}</text>
                 <text class="expand-icon">{{ expandedCards[habit.id] ? '↑' : '↓' }}</text>
               </view>
             </view>
@@ -128,7 +124,7 @@
             <!-- 笔记容器 -->
             <view class="notes-container" v-show="expandedCards[habit.id]">
               <view class="empty-notes" v-if="getWeekNotes(habit).length === 0">
-                <text>本周还没有记录心得哦~</text>
+                <text>本周还没有记录历程哦~</text>
               </view>
               <view class="notes-list" v-else>
                 <view
@@ -167,12 +163,12 @@
         </view>
       </view>
 
-      </view>
     </view>
+  </view>
 
-    <view class="add-button" v-if="!isOrderMode" @tap="addHabit">
-      <text class="plus">+</text>
-    </view>
+  <view class="add-button" v-if="!isOrderMode" @tap="addHabit">
+    <text class="plus">+</text>
+  </view>
 </template>
 
 <script>
@@ -221,6 +217,27 @@ export default defineComponent({
       return this.habits.filter(habit =>
           habit.completed.includes(todayTimestamp)
       ).length
+    },
+    currentStreak() {
+      if (!this.habits.length) return 0
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      let streak = 0
+      let currentDate = new Date(today)
+
+      while (true) {
+        const timestamp = currentDate.getTime()
+        const allHabitsCompleted = this.habits.every(habit =>
+            habit.completed.includes(timestamp)
+        )
+
+        if (!allHabitsCompleted) break
+        streak++
+        currentDate.setDate(currentDate.getDate() - 1)
+      }
+
+      return streak
     }
   },
 
@@ -1232,10 +1249,9 @@ export default defineComponent({
 .ai-message {
   background: #fff;
   left: 0;
-  padding: 20rpx 40rpx 0;
-  position: fixed;
+  padding: 20rpx 0;
+  display: flex;
   right: 0;
-  top: 200rpx;
   width: 100%;
   z-index: 100;
 }
@@ -1322,6 +1338,12 @@ export default defineComponent({
   display: flex;
   height: 100%;
   padding: 12rpx 24rpx;
+  gap: 8rpx;
+}
+
+.date-info .flip-clock .streak-icon {
+  font-size: 32rpx;
+  animation: flame 1.5s ease-in-out infinite;
 }
 
 .date-info .flip-clock .time-unit {
@@ -1335,32 +1357,24 @@ export default defineComponent({
   position: relative;
   text-align: center;
   transition: all .3s ease;
-  width: 100%;
 }
 
-.date-info .flip-clock .time-unit::before {
-  background: rgba(0, 0, 0, .1);
-  content: "";
-  height: 2rpx;
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+.date-info .flip-clock .streak-label {
+  color: #2c3e50;
+  font-size: 28rpx;
+  font-weight: 500;
 }
 
-.date-info .flip-clock .time-separator {
-  animation: blink 1s infinite;
-  color: #ff9f0a;
-  font-size: 36rpx;
-  font-weight: 700;
-  margin: 0 6rpx;
-}
-
-.header-row {
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 10rpx;
+@keyframes flame {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .habit-stats, .header-row {
@@ -1371,6 +1385,13 @@ export default defineComponent({
   gap: 40rpx;
   width: 100%;
   margin-top: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.header-row {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10rpx;
 }
 
 .habit-stats .progress-bar {
@@ -1382,7 +1403,7 @@ export default defineComponent({
 }
 
 .habit-stats .progress-bar .progress-fill {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 16rpx;
   height: 100%;
   transition: width 0.3s ease;
@@ -1444,7 +1465,7 @@ export default defineComponent({
 
 .habits-list .habit-card .card-face.card-back .flag-banner {
   align-items: center;
-  background: linear-gradient(180deg, #fff4e5, #ff9f0a);
+  background: linear-gradient(180deg, #fff4e5, var(--theme-color));
   border: 2rpx solid #e2e7ed;
   border-radius: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(255, 159, 10, .15);
@@ -1525,7 +1546,7 @@ export default defineComponent({
 
 .habits-list .habit-card .habit-header .title-section .habit-icon {
   align-items: center;
-  background-color: #ff9f0a;
+  background-color: var(--theme-color);
   border-radius: 16rpx;
   display: flex;
   height: 70rpx;
@@ -1608,11 +1629,11 @@ export default defineComponent({
 }
 
 .progress-view .week-day .day-box.today {
-  border: 2rpx solid #ff9f0a !important;
+  border: 2rpx solid var(--theme-color) !important;
 }
 
 .progress-view .week-day .day-box.today::after {
-  background-color: #ff9f0a;
+  background-color: var(--theme-color);
   border-radius: 50%;
   bottom: -20rpx;
   content: "";
@@ -1626,7 +1647,7 @@ export default defineComponent({
 
 .progress-view .week-day .day-box.completed {
   animation: complete-animation .5s cubic-bezier(.4, 0, .2, 1);
-  background: #ff9f0a !important;
+  background: var(--theme-color) !important;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
   color: #fff !important;
 }
@@ -1636,13 +1657,13 @@ export default defineComponent({
 }
 
 .progress-view .week-day .day-box.today.completed {
-  background: #ff9f0a !important;
+  background: var(--theme-color) !important;
   border-color: #fff !important;
   color: #fff !important;
 }
 
 .progress-view .week-day .day-box.today.completed::after {
-  background-color: #ff9f0a;
+  background-color: var(--theme-color);
   border-radius: 50%;
   bottom: -20rpx;
   content: "";
@@ -1664,7 +1685,7 @@ export default defineComponent({
   right: 40rpx; /* 修改：增加右侧距离 */
   width: 100rpx;
   height: 100rpx;
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1741,10 +1762,9 @@ export default defineComponent({
 }
 
 
-
 .view-container {
   height: calc(100vh - 220rpx);
-  margin-top: 400rpx;
+  margin-top: 350rpx;
   overflow-y: auto;
   position: relative;
 }
@@ -1792,7 +1812,7 @@ export default defineComponent({
 }
 
 .complete-order-btn {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 30rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .1);
   color: #fff;
@@ -1871,7 +1891,7 @@ export default defineComponent({
 }
 
 .habit-card .order-buttons .order-btn.up {
-  background: #ff9f0a;
+  background: var(--theme-color);
 }
 
 .habit-card .order-buttons .order-btn.up .order-icon {

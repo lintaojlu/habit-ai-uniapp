@@ -13,10 +13,9 @@
 .ai-message {
   background: #fff;
   left: 0;
-  padding: 20rpx 40rpx 0;
-  position: fixed;
+  padding: 20rpx 0;
+  display: flex;
   right: 0;
-  top: 200rpx;
   width: 100%;
   z-index: 100;
 }
@@ -92,6 +91,11 @@
   display: flex;
   height: 100%;
   padding: 12rpx 24rpx;
+  gap: 8rpx;
+}
+.date-info .flip-clock .streak-icon {
+  font-size: 32rpx;
+  animation: flame 1.5s ease-in-out infinite;
 }
 .date-info .flip-clock .time-unit {
   background: #edf0f5;
@@ -104,29 +108,22 @@
   position: relative;
   text-align: center;
   transition: all .3s ease;
-  width: 100%;
 }
-.date-info .flip-clock .time-unit::before {
-  background: rgba(0, 0, 0, .1);
-  content: "";
-  height: 2rpx;
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+.date-info .flip-clock .streak-label {
+  color: #2c3e50;
+  font-size: 28rpx;
+  font-weight: 500;
 }
-.date-info .flip-clock .time-separator {
-  animation: blink 1s infinite;
-  color: #ff9f0a;
-  font-size: 36rpx;
-  font-weight: 700;
-  margin: 0 6rpx;
+@keyframes flame {
+0% {
+    transform: scale(1);
 }
-.header-row {
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 10rpx;
+50% {
+    transform: scale(1.1);
+}
+100% {
+    transform: scale(1);
+}
 }
 .habit-stats, .header-row {
   display: flex;
@@ -135,6 +132,12 @@
   gap: 40rpx;
   width: 100%;
   margin-top: 20rpx;
+  margin-bottom: 20rpx;
+}
+.header-row {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10rpx;
 }
 .habit-stats .progress-bar {
   background: #edf0f5;
@@ -144,7 +147,7 @@
   overflow: hidden;
 }
 .habit-stats .progress-bar .progress-fill {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 16rpx;
   height: 100%;
   transition: width 0.3s ease;
@@ -197,7 +200,7 @@
 }
 .habits-list .habit-card .card-face.card-back .flag-banner {
   align-items: center;
-  background: linear-gradient(180deg, #fff4e5, #ff9f0a);
+  background: linear-gradient(180deg, #fff4e5, var(--theme-color));
   border: 2rpx solid #e2e7ed;
   border-radius: 16rpx;
   box-shadow: 0 4rpx 12rpx rgba(255, 159, 10, .15);
@@ -269,7 +272,7 @@
 }
 .habits-list .habit-card .habit-header .title-section .habit-icon {
   align-items: center;
-  background-color: #ff9f0a;
+  background-color: var(--theme-color);
   border-radius: 16rpx;
   display: flex;
   height: 70rpx;
@@ -341,10 +344,10 @@
   transform: scale(.95);
 }
 .progress-view .week-day .day-box.today {
-  border: 2rpx solid #ff9f0a !important;
+  border: 2rpx solid var(--theme-color) !important;
 }
 .progress-view .week-day .day-box.today::after {
-  background-color: #ff9f0a;
+  background-color: var(--theme-color);
   border-radius: 50%;
   bottom: -20rpx;
   content: "";
@@ -357,7 +360,7 @@
 }
 .progress-view .week-day .day-box.completed {
   animation: complete-animation .5s cubic-bezier(.4, 0, .2, 1);
-  background: #ff9f0a !important;
+  background: var(--theme-color) !important;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
   color: #fff !important;
 }
@@ -365,12 +368,12 @@
   animation: none;
 }
 .progress-view .week-day .day-box.today.completed {
-  background: #ff9f0a !important;
+  background: var(--theme-color) !important;
   border-color: #fff !important;
   color: #fff !important;
 }
 .progress-view .week-day .day-box.today.completed::after {
-  background-color: #ff9f0a;
+  background-color: var(--theme-color);
   border-radius: 50%;
   bottom: -20rpx;
   content: "";
@@ -390,7 +393,7 @@
   right: 40rpx; /* 修改：增加右侧距离 */
   width: 100rpx;
   height: 100rpx;
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -444,7 +447,7 @@
 }
 .view-container {
   height: calc(100vh - 220rpx);
-  margin-top: 400rpx;
+  margin-top: 350rpx;
   overflow-y: auto;
   position: relative;
 }
@@ -473,7 +476,7 @@
 }
 }
 .complete-order-btn {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 30rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .1);
   color: #fff;
@@ -539,7 +542,7 @@
   font-weight: 700;
 }
 .habit-card .order-buttons .order-btn.up {
-  background: #ff9f0a;
+  background: var(--theme-color);
 }
 .habit-card .order-buttons .order-btn.up .order-icon {
   color: #fff;

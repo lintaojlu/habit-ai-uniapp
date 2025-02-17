@@ -12,7 +12,7 @@
       />
       <view class="input-footer">
         <text class="counter">{{ habitName.length }}/20</text>
-        <text class="input-tip">点击下方习惯卡片自动填充，左右滑动查看更多</text>
+
       </view>
       <input
           class="habit-input flag-input"
@@ -24,45 +24,35 @@
       <view class="input-footer">
         <text class="counter">{{ habitFlag.length }}/25</text>
       </view>
+
+      <!-- 提醒时间选择 -->
+      <view class="reminder-times">
+        <text class="reminder-title">设置提醒时间</text>
+        <view class="reminder-list">
+          <view v-for="(time, index) in reminderTimes" :key="index" class="reminder-item">
+            <picker
+              mode="time"
+              :value="time"
+              @change="(e) => onTimeChange(e, index)"
+              class="time-picker"
+            >
+              <view class="time-display">
+                <text class="time">{{ time }}</text>
+                <text class="period">{{ getTimePeriod(time) }}</text>
+              </view>
+            </picker>
+            <text class="delete-time" @tap="deleteTime(index)">×</text>
+          </view>
+        </view>
+        <view class="add-time" @tap="addTime" v-if="reminderTimes.length < 5">
+          <text class="add-icon">+</text>
+          <text class="add-text">添加提醒时间</text>
+        </view>
+      </view>
+
       <button class="next-button" @tap="nextStep">下一步</button>
 
-      <scroll-view
-          class="theme-suggestions-container"
-          scroll-y
-          :bounces="false"
-          :enhanced="true"
-          :show-scrollbar="false"
-      >
-        <view
-            class="habit-suggestions theme-suggestions"
-            v-for="(themeGroup, themeIndex) in themeHabits"
-            :key="themeIndex"
-        >
-          <text class="suggestion-title">{{ themeGroup.theme }}</text>
-          <scroll-view
-              scroll-x
-              :bounces="false"
-              class="suggestion-scroll"
-              :enhanced="true"
-              :show-scrollbar="false"
-          >
-            <view class="suggestion-cards">
-              <view
-                  v-for="(habit, habitIndex) in themeGroup.habits"
-                  :key="habitIndex"
-                  class="suggestion-card theme-card"
-                  :class="{ active: selectedSuggestion === habit }"
-                  @tap="selectSuggestion(habit)"
-              >
-                <view class="card-content">
-                  <text class="card-title">{{ habit.title }}</text>
-                  <text class="card-flag">{{ habit.flag }}</text>
-                </view>
-              </view>
-            </view>
-          </scroll-view>
-        </view>
-      </scroll-view>
+
     </view>
 
     <!-- 第二步：选择类别 -->
@@ -231,6 +221,7 @@ export default {
       selectedCategory: '',
       currentCategoryGroup: 0,
       reminderTime: '12:00',
+      reminderTimes: ['12:00'],
       searchQuery: '',
       emojiMappings: {
         '运动|跑步|跑|步行|走|散步|健身': '🏃',
@@ -332,65 +323,9 @@ export default {
       habitId: null,
       touchStartX: 0,
       touchStartY: 0,
-      themeHabits: [
-        {
-          theme: '健康生活',
-          habits: [
-            {title: '每天喝8杯水', flag: '保持身体水分，让生活更健康'},
-            {title: '晨跑5公里', flag: '用晨跑开启充满活力的一天'},
-            {title: '做15分钟拉伸', flag: '保持身体柔韧，预防运动损伤'},
-            {title: '俯卧撑30个', flag: '增强体质，打造完美身材'}
-          ]
-        },
-        {
-          theme: '阅读学习',
-          habits: [
-            {title: '阅读30分钟', flag: '在书海中遨游，让思维不断成长'},
-            {title: '写读书笔记500字', flag: '记录阅读心得，内化为自己的知识'},
-            {title: '背诵英语短文', flag: '每天一篇短文，英语能力稳步提升'},
-            {title: '背单词50个', flag: '每天进步一点点，英语能力大提升'}
-          ]
-        },
-        {
-          theme: '饮食健康',
-          habits: [
-            {title: '记录今日饮食', flag: '关注饮食健康，培养良好习惯'},
-            {title: '自制一顿健康餐', flag: '享受烹饪乐趣，吃得健康又美味'},
-            {title: '不吃零食一整天', flag: '远离垃圾食品，保持身材健康'},
-            {title: '晚饭后不再进食', flag: '控制饮食时间，改善睡眠质量'}
-          ]
-        },
-        {
-          theme: '心灵成长',
-          habits: [
-            {title: '冥想15分钟', flag: '静心冥想，平静内心的波澜'},
-            {title: '记录三件感恩', flag: '感恩生活中的美好，保持积极心态'},
-            {title: '冥想观察呼吸10分钟', flag: '觉察当下，保持内心平静'},
-            {title: '记录三个优点', flag: '发现自己的闪光点，建立自信'}
-          ]
-        },
-        {
-          theme: '生活规划',
-          habits: [
-            {title: '列出明日待办3件', flag: '提前规划，让生活更有条理'},
-            {title: '记账整理支出', flag: '掌控财务状况，规划美好未来'},
-            {title: '整理房间15分钟', flag: '保持整洁空间，心情也会变好'},
-            {title: '22:30准时睡觉', flag: '早睡早起，让生活更规律'}
-          ]
-        },
-        {
-          theme: '兴趣培养',
-          habits: [
-            {title: '练字20分钟', flag: '提升书法技艺，培养耐心与专注'},
-            {title: '写作300字', flag: '坚持输出，让思维更清晰'},
-            {title: '练习一首乐器', flag: '培养艺术细胞，丰富精神生活'},
-            {title: '练习摄影构图', flag: '用镜头记录生活的美好瞬间'}
-          ]
-        }
-      ],
+
       matchedEmoji: '✨',
       selectedEmoji: '',
-      selectedSuggestion: null,
       showEmojiInput: false,
       customEmoji: '',
       showEmojiModal: false,
@@ -411,7 +346,7 @@ export default {
         {name: '清新绿', value: '#C1E1C1'},
         {name: '温柔粉', value: '#FAD3E7'}
       ],
-      themeColorHex: '#FF9F0A'
+      themeColorHex: 'var(--theme-color)'
     }
   },
 
@@ -461,6 +396,27 @@ export default {
   },
 
   methods: {
+    getTimePeriod(time) {
+      const hour = parseInt(time.split(':')[0])
+      return hour >= 12 ? '下午' : '上午'
+    },
+
+    onTimeChange(e, index) {
+      const times = [...this.reminderTimes]
+      times[index] = e.detail.value
+      this.reminderTimes = times
+    },
+
+    addTime() {
+      if (this.reminderTimes.length < 5) {
+        this.reminderTimes.push('12:00')
+      }
+    },
+
+    deleteTime(index) {
+      this.reminderTimes.splice(index, 1)
+    },
+
     nextStep() {
       if (this.currentStep === 1 && !this.habitName.trim()) {
         uni.showToast({
@@ -908,6 +864,76 @@ export default {
 </script>
 
 <style>
+.reminder-times {
+  margin: 20rpx 0;
+}
+
+.reminder-title {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+
+.reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  background-color: #f8f8f8;
+  padding: 20rpx;
+  border-radius: 12rpx;
+}
+
+.time-picker {
+  flex: 1;
+}
+
+.time-display {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.time {
+  font-size: 32rpx;
+  color: #333;
+}
+
+.period {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.delete-time {
+  font-size: 40rpx;
+  color: #999;
+  padding: 0 20rpx;
+}
+
+.add-time {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+}
+
+.add-icon {
+  font-size: 32rpx;
+  color: #666;
+}
+
+.add-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
 .container {
   background-color: #fff;
   color: #2c3e50;
@@ -965,7 +991,7 @@ export default {
 
 .next-button {
   align-items: center;
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   bottom: 30rpx;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
@@ -1034,7 +1060,7 @@ export default {
 }
 
 .category-tabs .tab-item.active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
   color: #fff;
   transform: scale(1.1);
@@ -1096,7 +1122,7 @@ export default {
 }
 
 .categories .category-item.active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   transform: scale(1);
 }
 
@@ -1146,7 +1172,7 @@ export default {
 }
 
 .save-button {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
   color: #fff;
@@ -1322,7 +1348,7 @@ export default {
 }
 
 .habit-suggestions .suggestion-card.theme-card.active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   color: #fff;
   transform: scale(1.02);
 }
@@ -1437,7 +1463,7 @@ export default {
 }
 
 .matched-emoji:active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   opacity: .9;
   transform: scale(1);
 }
@@ -1453,7 +1479,7 @@ export default {
 
 .complete-button {
   align-items: center;
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   bottom: 30rpx;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
@@ -1688,7 +1714,7 @@ export default {
 }
 
 .edit-modal .modal-content .modal-footer .modal-buttons .save-btn {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   color: #fff;
   font-size: 28rpx;
@@ -1845,7 +1871,7 @@ export default {
 }
 
 .settings-modal .modal-content .settings-section .preset-colors .color-item.active .color-preview {
-  box-shadow: 0 0 0 4rpx #ff9f0a;
+  box-shadow: 0 0 0 4rpx var(--theme-color);
   transform: scale(1.1);
 }
 
@@ -1896,7 +1922,7 @@ export default {
 }
 
 .settings-modal .modal-content .modal-footer .modal-buttons .save-btn {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   color: #fff;
   font-size: 28rpx;

@@ -363,7 +363,7 @@ export default defineComponent({
 }
 
 .calendar-grid .days-grid .day-cell .habits-count .count {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 16rpx;
   color: #fff;
   display: inline-block;
@@ -377,12 +377,12 @@ export default defineComponent({
 }
 
 .calendar-grid .days-grid .day-cell.today {
-  border: 2rpx solid #ff9f0a;
+  border: 2rpx solid var(--theme-color);
   opacity: 1;
 }
 
 .calendar-grid .days-grid .day-cell.today::after {
-  background-color: #ff9f0a;
+  background-color: var(--theme-color);
   border-radius: 50%;
   bottom: -16rpx;
   content: "";
@@ -395,7 +395,7 @@ export default defineComponent({
 }
 
 .calendar-grid .days-grid .day-cell.selected {
-  background: #ff9f0a;
+  background: var(--theme-color);
   opacity: 1;
 }
 
@@ -405,7 +405,7 @@ export default defineComponent({
 
 .calendar-grid .days-grid .day-cell.selected .habits-count .count {
   background: #fff;
-  color: #ff9f0a;
+  color: var(--theme-color);
   opacity: 1;
 }
 

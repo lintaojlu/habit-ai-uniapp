@@ -1,6 +1,20 @@
 {
   "pages": [
     {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "HabitAI",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"      }
+    },
+    {
+      "path": "pages/register/register",
+      "style": {
+        "navigationBarTitleText": "HabitAI",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"      }
+    },
+    {
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "HabitAI",
@@ -28,6 +42,15 @@
         "navigationBarTextStyle": "black",
         "usingComponents": {}
       }
+    },
+    {
+      "path": "pages/settings/settings",
+      "style": {
+        "navigationBarTitleText": "设置",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black",
+        "usingComponents": {}
+      }
     }
   ],
   "globalStyle": {
@@ -37,7 +60,7 @@
   },
   "tabBar": {
     "color": "#333333",
-    "selectedColor": "#FF9F0A",
+    "selectedColor": "var(--theme-color)",
     "backgroundColor": "#EDF0F5",
     "borderStyle": "white",
     "list": [
@@ -47,8 +70,13 @@
       },
       {
         "pagePath": "pages/overview/overview",
-        "text": "总览"
+        "text": "统计"
+      },
+      {
+        "pagePath": "pages/settings/settings",
+        "text": "设置"
       }
     ]
   }
+
 }

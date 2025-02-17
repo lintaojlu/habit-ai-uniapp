@@ -1,4 +1,62 @@
 
+.reminder-times {
+  margin: 20rpx 0;
+}
+.reminder-title {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+.reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.reminder-item {
+  display: flex;
+  align-items: center;
+  background-color: #f8f8f8;
+  padding: 20rpx;
+  border-radius: 12rpx;
+}
+.time-picker {
+  flex: 1;
+}
+.time-display {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.time {
+  font-size: 32rpx;
+  color: #333;
+}
+.period {
+  font-size: 24rpx;
+  color: #666;
+}
+.delete-time {
+  font-size: 40rpx;
+  color: #999;
+  padding: 0 20rpx;
+}
+.add-time {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+}
+.add-icon {
+  font-size: 32rpx;
+  color: #666;
+}
+.add-text {
+  font-size: 28rpx;
+  color: #666;
+}
 .container {
   background-color: #fff;
   color: #2c3e50;
@@ -48,7 +106,7 @@
 }
 .next-button {
   align-items: center;
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   bottom: 30rpx;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
@@ -106,7 +164,7 @@
   white-space: nowrap;
 }
 .category-tabs .tab-item.active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
   color: #fff;
   transform: scale(1.1);
@@ -159,7 +217,7 @@
   width: calc((100% - 100rpx) / 6);
 }
 .categories .category-item.active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   transform: scale(1);
 }
 .categories .category-item.active .emoji-icon {
@@ -201,7 +259,7 @@
   font-size: 36rpx;
 }
 .save-button {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
   color: #fff;
@@ -347,7 +405,7 @@
   width: 280rpx;
 }
 .habit-suggestions .suggestion-card.theme-card.active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   color: #fff;
   transform: scale(1.02);
 }
@@ -444,7 +502,7 @@
   width: 100%;
 }
 .matched-emoji:active {
-  background: #ff9f0a;
+  background: var(--theme-color);
   opacity: .9;
   transform: scale(1);
 }
@@ -457,7 +515,7 @@
 }
 .complete-button {
   align-items: center;
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   bottom: 30rpx;
   box-shadow: 0 0 15rpx rgba(255, 159, 10, .15);
@@ -650,7 +708,7 @@ to {
   padding: 10rpx 30rpx;
 }
 .edit-modal .modal-content .modal-footer .modal-buttons .save-btn {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   color: #fff;
   font-size: 28rpx;
@@ -785,7 +843,7 @@ to {
   gap: 10rpx;
 }
 .settings-modal .modal-content .settings-section .preset-colors .color-item.active .color-preview {
-  box-shadow: 0 0 0 4rpx #ff9f0a;
+  box-shadow: 0 0 0 4rpx var(--theme-color);
   transform: scale(1.1);
 }
 .settings-modal .modal-content .settings-section .preset-colors .color-item .color-preview {
@@ -828,7 +886,7 @@ to {
   padding: 10rpx 30rpx;
 }
 .settings-modal .modal-content .modal-footer .modal-buttons .save-btn {
-  background: #ff9f0a;
+  background: var(--theme-color);
   border-radius: 20rpx;
   color: #fff;
   font-size: 28rpx;

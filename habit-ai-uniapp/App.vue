@@ -57,6 +57,7 @@ export default {
 }
 
 page {
+    --theme-color: #00c988;
     --status-bar-height: 25px;
     --top-window-height: 0px;
     --window-top: 0px;

@@ -16,6 +16,7 @@ const _sfc_main = {
       selectedCategory: "",
       currentCategoryGroup: 0,
       reminderTime: "12:00",
+      reminderTimes: ["12:00"],
       searchQuery: "",
       emojiMappings: {
         "运动|跑步|跑|步行|走|散步|健身": "🏃",
@@ -117,65 +118,8 @@ const _sfc_main = {
       habitId: null,
       touchStartX: 0,
       touchStartY: 0,
-      themeHabits: [
-        {
-          theme: "健康生活",
-          habits: [
-            { title: "每天喝8杯水", flag: "保持身体水分，让生活更健康" },
-            { title: "晨跑5公里", flag: "用晨跑开启充满活力的一天" },
-            { title: "做15分钟拉伸", flag: "保持身体柔韧，预防运动损伤" },
-            { title: "俯卧撑30个", flag: "增强体质，打造完美身材" }
-          ]
-        },
-        {
-          theme: "阅读学习",
-          habits: [
-            { title: "阅读30分钟", flag: "在书海中遨游，让思维不断成长" },
-            { title: "写读书笔记500字", flag: "记录阅读心得，内化为自己的知识" },
-            { title: "背诵英语短文", flag: "每天一篇短文，英语能力稳步提升" },
-            { title: "背单词50个", flag: "每天进步一点点，英语能力大提升" }
-          ]
-        },
-        {
-          theme: "饮食健康",
-          habits: [
-            { title: "记录今日饮食", flag: "关注饮食健康，培养良好习惯" },
-            { title: "自制一顿健康餐", flag: "享受烹饪乐趣，吃得健康又美味" },
-            { title: "不吃零食一整天", flag: "远离垃圾食品，保持身材健康" },
-            { title: "晚饭后不再进食", flag: "控制饮食时间，改善睡眠质量" }
-          ]
-        },
-        {
-          theme: "心灵成长",
-          habits: [
-            { title: "冥想15分钟", flag: "静心冥想，平静内心的波澜" },
-            { title: "记录三件感恩", flag: "感恩生活中的美好，保持积极心态" },
-            { title: "冥想观察呼吸10分钟", flag: "觉察当下，保持内心平静" },
-            { title: "记录三个优点", flag: "发现自己的闪光点，建立自信" }
-          ]
-        },
-        {
-          theme: "生活规划",
-          habits: [
-            { title: "列出明日待办3件", flag: "提前规划，让生活更有条理" },
-            { title: "记账整理支出", flag: "掌控财务状况，规划美好未来" },
-            { title: "整理房间15分钟", flag: "保持整洁空间，心情也会变好" },
-            { title: "22:30准时睡觉", flag: "早睡早起，让生活更规律" }
-          ]
-        },
-        {
-          theme: "兴趣培养",
-          habits: [
-            { title: "练字20分钟", flag: "提升书法技艺，培养耐心与专注" },
-            { title: "写作300字", flag: "坚持输出，让思维更清晰" },
-            { title: "练习一首乐器", flag: "培养艺术细胞，丰富精神生活" },
-            { title: "练习摄影构图", flag: "用镜头记录生活的美好瞬间" }
-          ]
-        }
-      ],
       matchedEmoji: "✨",
       selectedEmoji: "",
-      selectedSuggestion: null,
       showEmojiInput: false,
       customEmoji: "",
       showEmojiModal: false,
@@ -196,7 +140,7 @@ const _sfc_main = {
         { name: "清新绿", value: "#C1E1C1" },
         { name: "温柔粉", value: "#FAD3E7" }
       ],
-      themeColorHex: "#FF9F0A"
+      themeColorHex: "var(--theme-color)"
     };
   },
   computed: {
@@ -239,6 +183,23 @@ const _sfc_main = {
     });
   },
   methods: {
+    getTimePeriod(time) {
+      const hour = parseInt(time.split(":")[0]);
+      return hour >= 12 ? "下午" : "上午";
+    },
+    onTimeChange(e, index) {
+      const times = [...this.reminderTimes];
+      times[index] = e.detail.value;
+      this.reminderTimes = times;
+    },
+    addTime() {
+      if (this.reminderTimes.length < 5) {
+        this.reminderTimes.push("12:00");
+      }
+    },
+    deleteTime(index) {
+      this.reminderTimes.splice(index, 1);
+    },
     nextStep() {
       if (this.currentStep === 1 && !this.habitName.trim()) {
         common_vendor.index.showToast({
@@ -296,7 +257,7 @@ const _sfc_main = {
             updateTime: Date.now()
           };
         } else {
-          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:529", "Habit not found:", this.habitId);
+          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:485", "Habit not found:", this.habitId);
         }
       } else {
         const newHabit = {
@@ -337,7 +298,7 @@ const _sfc_main = {
           this.matchedEmoji = this.matchHabitEmoji(habit.title);
         }
       } else {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:574", "Failed to find habit in storage:", {
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:530", "Failed to find habit in storage:", {
           searchId: this.habitId,
           availableHabits: habits.map((h) => ({
             id: h.id,
@@ -460,7 +421,7 @@ const _sfc_main = {
             reminderTime: this.reminderTime
           };
         } else {
-          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:703", "Failed to find habit to edit:", this.habitId);
+          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:659", "Failed to find habit to edit:", this.habitId);
           common_vendor.index.showToast({
             title: "保存失败，未找到习惯",
             icon: "none"
@@ -494,7 +455,7 @@ const _sfc_main = {
           common_vendor.index.navigateBack();
         }, 500);
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:738", "Failed to save habit:", error);
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:694", "Failed to save habit:", error);
         common_vendor.index.showToast({
           title: "保存失败，请重试",
           icon: "none"
@@ -649,50 +610,49 @@ const _sfc_main = {
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $data.currentStep === 1
-  }, $data.currentStep === 1 ? {
+  }, $data.currentStep === 1 ? common_vendor.e({
     b: $data.habitName,
     c: common_vendor.o(($event) => $data.habitName = $event.detail.value),
     d: common_vendor.t($data.habitName.length),
     e: $data.habitFlag,
     f: common_vendor.o(($event) => $data.habitFlag = $event.detail.value),
     g: common_vendor.t($data.habitFlag.length),
-    h: common_vendor.o((...args) => $options.nextStep && $options.nextStep(...args)),
-    i: common_vendor.f($data.themeHabits, (themeGroup, themeIndex, i0) => {
+    h: common_vendor.f($data.reminderTimes, (time, index, i0) => {
       return {
-        a: common_vendor.t(themeGroup.theme),
-        b: common_vendor.f(themeGroup.habits, (habit, habitIndex, i1) => {
-          return {
-            a: common_vendor.t(habit.title),
-            b: common_vendor.t(habit.flag),
-            c: habitIndex,
-            d: $data.selectedSuggestion === habit ? 1 : "",
-            e: common_vendor.o(($event) => $options.selectSuggestion(habit), habitIndex)
-          };
-        }),
-        c: themeIndex
+        a: common_vendor.t(time),
+        b: common_vendor.t($options.getTimePeriod(time)),
+        c: time,
+        d: common_vendor.o((e) => $options.onTimeChange(e, index), index),
+        e: common_vendor.o(($event) => $options.deleteTime(index), index),
+        f: index
       };
-    })
+    }),
+    i: $data.reminderTimes.length < 5
+  }, $data.reminderTimes.length < 5 ? {
+    j: common_vendor.o((...args) => $options.addTime && $options.addTime(...args))
   } : {}, {
-    j: $data.currentStep === 2
+    k: common_vendor.o((...args) => $options.nextStep && $options.nextStep(...args))
+  }) : {}, {
+    l: $data.currentStep === 2
   }, $data.currentStep === 2 ? common_vendor.e({
-    k: common_vendor.o(($event) => $data.currentStep = 1),
-    l: common_vendor.t($data.habitName),
-    m: $data.searchQuery,
-    n: common_vendor.o(($event) => $data.searchQuery = $event.detail.value),
-    o: common_vendor.t($options.displayEmoji),
-    p: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
-    q: common_vendor.o((...args) => $options.showIconSettings && $options.showIconSettings(...args)),
-    r: common_vendor.t($data.matchedEmoji),
-    s: $data.showSettingsModal
+    m: common_vendor.o(($event) => $data.currentStep = 1),
+    n: common_vendor.t($data.habitName),
+    o: $data.searchQuery,
+    p: common_vendor.o(($event) => $data.searchQuery = $event.detail.value),
+    q: common_vendor.t($options.displayEmoji),
+    r: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
+    s: common_vendor.o((...args) => $options.showIconSettings && $options.showIconSettings(...args)),
+    t: common_vendor.t($data.matchedEmoji),
+    v: $data.showSettingsModal
   }, $data.showSettingsModal ? {
-    t: common_vendor.t($options.isValidEmoji($data.customEmoji) ? $data.customEmoji : $options.displayEmoji),
-    v: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
-    w: common_vendor.o([($event) => $data.customEmoji = $event.detail.value, (...args) => $options.checkEmojiInput && $options.checkEmojiInput(...args)]),
-    x: $data.customEmoji,
-    y: common_vendor.o([($event) => $data.customColor = $event.detail.value, (...args) => $options.validateColorInput && $options.validateColorInput(...args)]),
-    z: $data.customColor,
-    A: $options.isValidColor($data.customColor) ? $data.customColor : $data.selectedColor === "$theme-color" ? $data.themeColorHex : "#CCCCCC",
-    B: common_vendor.f($data.presetColors, (color, index, i0) => {
+    w: common_vendor.t($options.isValidEmoji($data.customEmoji) ? $data.customEmoji : $options.displayEmoji),
+    x: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
+    y: common_vendor.o([($event) => $data.customEmoji = $event.detail.value, (...args) => $options.checkEmojiInput && $options.checkEmojiInput(...args)]),
+    z: $data.customEmoji,
+    A: common_vendor.o([($event) => $data.customColor = $event.detail.value, (...args) => $options.validateColorInput && $options.validateColorInput(...args)]),
+    B: $data.customColor,
+    C: $options.isValidColor($data.customColor) ? $data.customColor : $data.selectedColor === "$theme-color" ? $data.themeColorHex : "#CCCCCC",
+    D: common_vendor.f($data.presetColors, (color, index, i0) => {
       return {
         a: color.value,
         b: common_vendor.t(color.name),
@@ -701,12 +661,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.selectColor(color.value), index)
       };
     }),
-    C: common_vendor.o((...args) => $options.resetSettings && $options.resetSettings(...args)),
-    D: common_vendor.o(($event) => $data.showSettingsModal = false),
-    E: common_vendor.o((...args) => $options.saveSettings && $options.saveSettings(...args))
+    E: common_vendor.o((...args) => $options.resetSettings && $options.resetSettings(...args)),
+    F: common_vendor.o(($event) => $data.showSettingsModal = false),
+    G: common_vendor.o((...args) => $options.saveSettings && $options.saveSettings(...args))
   } : {}, {
-    F: common_vendor.o((...args) => $options.completeHabitSetup && $options.completeHabitSetup(...args)),
-    G: common_vendor.f($options.filteredCategories, (categoryGroup, groupIndex, i0) => {
+    H: common_vendor.o((...args) => $options.completeHabitSetup && $options.completeHabitSetup(...args)),
+    I: common_vendor.f($options.filteredCategories, (categoryGroup, groupIndex, i0) => {
       return common_vendor.e({
         a: common_vendor.t(categoryGroup.group),
         b: groupIndex === 0
@@ -727,14 +687,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   }) : {}, {
-    H: $data.currentStep === 3
+    J: $data.currentStep === 3
   }, $data.currentStep === 3 ? {
-    I: common_vendor.t($data.reminderTime),
-    J: common_vendor.t($options.timePeriod),
-    K: $data.reminderTime,
-    L: common_vendor.o((...args) => $options.onTimeChange && $options.onTimeChange(...args)),
-    M: common_vendor.o((...args) => $options.saveHabit && $options.saveHabit(...args)),
-    N: common_vendor.o((...args) => $options.skipReminder && $options.skipReminder(...args))
+    K: common_vendor.t($data.reminderTime),
+    L: common_vendor.t($options.timePeriod),
+    M: $data.reminderTime,
+    N: common_vendor.o((...args) => $options.onTimeChange && $options.onTimeChange(...args)),
+    O: common_vendor.o((...args) => $options.saveHabit && $options.saveHabit(...args)),
+    P: common_vendor.o((...args) => $options.skipReminder && $options.skipReminder(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
