@@ -9,7 +9,12 @@ function generateUUID() {
 }
 const _sfc_main = {
   data() {
+    const today = /* @__PURE__ */ new Date();
+    const defaultTarget = /* @__PURE__ */ new Date();
+    defaultTarget.setDate(today.getDate() + 21);
     return {
+      today: this.formatDate(today),
+      targetDate: this.formatDate(defaultTarget),
       currentStep: 1,
       habitName: "",
       habitFlag: "",
@@ -144,6 +149,17 @@ const _sfc_main = {
     };
   },
   computed: {
+    formatTargetDate() {
+      const date = new Date(this.targetDate);
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    },
+    daysLeft() {
+      const target = new Date(this.targetDate);
+      const today = /* @__PURE__ */ new Date();
+      today.setHours(0, 0, 0, 0);
+      target.setHours(0, 0, 0, 0);
+      return Math.ceil((target - today) / (1e3 * 60 * 60 * 24));
+    },
     timePeriod() {
       const hour = parseInt(this.reminderTime.split(":")[0]);
       return hour >= 12 ? "PM" : "AM";
@@ -183,6 +199,15 @@ const _sfc_main = {
     });
   },
   methods: {
+    formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    },
+    onTargetDateChange(e) {
+      this.targetDate = e.detail.value;
+    },
     getTimePeriod(time) {
       const hour = parseInt(time.split(":")[0]);
       return hour >= 12 ? "下午" : "上午";
@@ -228,9 +253,6 @@ const _sfc_main = {
         }
       }
     },
-    onTimeChange(e) {
-      this.reminderTime = e.detail.value;
-    },
     skipReminder() {
       this.saveHabit();
     },
@@ -257,7 +279,7 @@ const _sfc_main = {
             updateTime: Date.now()
           };
         } else {
-          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:485", "Habit not found:", this.habitId);
+          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:526", "Habit not found:", this.habitId);
         }
       } else {
         const newHabit = {
@@ -269,6 +291,7 @@ const _sfc_main = {
           createTime: Date.now(),
           updateTime: Date.now(),
           completed: [],
+          targetDate: this.targetDate,
           notes: []
         };
         habits.push(newHabit);
@@ -298,7 +321,7 @@ const _sfc_main = {
           this.matchedEmoji = this.matchHabitEmoji(habit.title);
         }
       } else {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:530", "Failed to find habit in storage:", {
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:572", "Failed to find habit in storage:", {
           searchId: this.habitId,
           availableHabits: habits.map((h) => ({
             id: h.id,
@@ -421,7 +444,7 @@ const _sfc_main = {
             reminderTime: this.reminderTime
           };
         } else {
-          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:659", "Failed to find habit to edit:", this.habitId);
+          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:701", "Failed to find habit to edit:", this.habitId);
           common_vendor.index.showToast({
             title: "保存失败，未找到习惯",
             icon: "none"
@@ -455,7 +478,7 @@ const _sfc_main = {
           common_vendor.index.navigateBack();
         }, 500);
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:694", "Failed to save habit:", error);
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:736", "Failed to save habit:", error);
         common_vendor.index.showToast({
           title: "保存失败，请重试",
           icon: "none"
@@ -617,7 +640,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: $data.habitFlag,
     f: common_vendor.o(($event) => $data.habitFlag = $event.detail.value),
     g: common_vendor.t($data.habitFlag.length),
-    h: common_vendor.f($data.reminderTimes, (time, index, i0) => {
+    h: common_vendor.t($options.formatTargetDate),
+    i: common_vendor.t($options.daysLeft),
+    j: $data.targetDate,
+    k: $data.today,
+    l: common_vendor.o((...args) => $options.onTargetDateChange && $options.onTargetDateChange(...args)),
+    m: common_vendor.f($data.reminderTimes, (time, index, i0) => {
       return {
         a: common_vendor.t(time),
         b: common_vendor.t($options.getTimePeriod(time)),
@@ -627,32 +655,32 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         f: index
       };
     }),
-    i: $data.reminderTimes.length < 5
+    n: $data.reminderTimes.length < 5
   }, $data.reminderTimes.length < 5 ? {
-    j: common_vendor.o((...args) => $options.addTime && $options.addTime(...args))
+    o: common_vendor.o((...args) => $options.addTime && $options.addTime(...args))
   } : {}, {
-    k: common_vendor.o((...args) => $options.nextStep && $options.nextStep(...args))
+    p: common_vendor.o((...args) => $options.nextStep && $options.nextStep(...args))
   }) : {}, {
-    l: $data.currentStep === 2
+    q: $data.currentStep === 2
   }, $data.currentStep === 2 ? common_vendor.e({
-    m: common_vendor.o(($event) => $data.currentStep = 1),
-    n: common_vendor.t($data.habitName),
-    o: $data.searchQuery,
-    p: common_vendor.o(($event) => $data.searchQuery = $event.detail.value),
-    q: common_vendor.t($options.displayEmoji),
-    r: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
-    s: common_vendor.o((...args) => $options.showIconSettings && $options.showIconSettings(...args)),
-    t: common_vendor.t($data.matchedEmoji),
-    v: $data.showSettingsModal
-  }, $data.showSettingsModal ? {
-    w: common_vendor.t($options.isValidEmoji($data.customEmoji) ? $data.customEmoji : $options.displayEmoji),
+    r: common_vendor.o(($event) => $data.currentStep = 1),
+    s: common_vendor.t($data.habitName),
+    t: $data.searchQuery,
+    v: common_vendor.o(($event) => $data.searchQuery = $event.detail.value),
+    w: common_vendor.t($options.displayEmoji),
     x: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
-    y: common_vendor.o([($event) => $data.customEmoji = $event.detail.value, (...args) => $options.checkEmojiInput && $options.checkEmojiInput(...args)]),
-    z: $data.customEmoji,
-    A: common_vendor.o([($event) => $data.customColor = $event.detail.value, (...args) => $options.validateColorInput && $options.validateColorInput(...args)]),
-    B: $data.customColor,
-    C: $options.isValidColor($data.customColor) ? $data.customColor : $data.selectedColor === "$theme-color" ? $data.themeColorHex : "#CCCCCC",
-    D: common_vendor.f($data.presetColors, (color, index, i0) => {
+    y: common_vendor.o((...args) => $options.showIconSettings && $options.showIconSettings(...args)),
+    z: common_vendor.t($data.matchedEmoji),
+    A: $data.showSettingsModal
+  }, $data.showSettingsModal ? {
+    B: common_vendor.t($options.isValidEmoji($data.customEmoji) ? $data.customEmoji : $options.displayEmoji),
+    C: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
+    D: common_vendor.o([($event) => $data.customEmoji = $event.detail.value, (...args) => $options.checkEmojiInput && $options.checkEmojiInput(...args)]),
+    E: $data.customEmoji,
+    F: common_vendor.o([($event) => $data.customColor = $event.detail.value, (...args) => $options.validateColorInput && $options.validateColorInput(...args)]),
+    G: $data.customColor,
+    H: $options.isValidColor($data.customColor) ? $data.customColor : $data.selectedColor === "$theme-color" ? $data.themeColorHex : "#CCCCCC",
+    I: common_vendor.f($data.presetColors, (color, index, i0) => {
       return {
         a: color.value,
         b: common_vendor.t(color.name),
@@ -661,12 +689,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.selectColor(color.value), index)
       };
     }),
-    E: common_vendor.o((...args) => $options.resetSettings && $options.resetSettings(...args)),
-    F: common_vendor.o(($event) => $data.showSettingsModal = false),
-    G: common_vendor.o((...args) => $options.saveSettings && $options.saveSettings(...args))
+    J: common_vendor.o((...args) => $options.resetSettings && $options.resetSettings(...args)),
+    K: common_vendor.o(($event) => $data.showSettingsModal = false),
+    L: common_vendor.o((...args) => $options.saveSettings && $options.saveSettings(...args))
   } : {}, {
-    H: common_vendor.o((...args) => $options.completeHabitSetup && $options.completeHabitSetup(...args)),
-    I: common_vendor.f($options.filteredCategories, (categoryGroup, groupIndex, i0) => {
+    M: common_vendor.o((...args) => $options.completeHabitSetup && $options.completeHabitSetup(...args)),
+    N: common_vendor.f($options.filteredCategories, (categoryGroup, groupIndex, i0) => {
       return common_vendor.e({
         a: common_vendor.t(categoryGroup.group),
         b: groupIndex === 0
@@ -687,14 +715,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   }) : {}, {
-    J: $data.currentStep === 3
+    O: $data.currentStep === 3
   }, $data.currentStep === 3 ? {
-    K: common_vendor.t($data.reminderTime),
-    L: common_vendor.t($options.timePeriod),
-    M: $data.reminderTime,
-    N: common_vendor.o((...args) => $options.onTimeChange && $options.onTimeChange(...args)),
-    O: common_vendor.o((...args) => $options.saveHabit && $options.saveHabit(...args)),
-    P: common_vendor.o((...args) => $options.skipReminder && $options.skipReminder(...args))
+    P: common_vendor.t($data.reminderTime),
+    Q: common_vendor.t($options.timePeriod),
+    R: $data.reminderTime,
+    S: common_vendor.o((...args) => $options.onTimeChange && $options.onTimeChange(...args)),
+    T: common_vendor.o((...args) => $options.saveHabit && $options.saveHabit(...args)),
+    U: common_vendor.o((...args) => $options.skipReminder && $options.skipReminder(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

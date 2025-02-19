@@ -1,7 +1,8 @@
 // utils/api.js
-const baseURL = 'https://api.example.com';
+const baseURL = 'http://123.56.229.52:8000';
 
-function request(options) {
+// Export the request function
+export function request(options) {
     return new Promise((resolve, reject) => {
         uni.request({
             url: baseURL + options.url,

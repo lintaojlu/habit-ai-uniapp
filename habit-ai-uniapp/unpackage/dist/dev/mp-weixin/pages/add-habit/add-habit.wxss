@@ -91,6 +91,7 @@
 }
 .habit-input {
   background: #f5f7fa;
+  font-size: 28rpx;
   border-radius: 20rpx;
   box-sizing: border-box;
   color: #2c3e50;
@@ -103,6 +104,11 @@
   background: #edf0f5;
   font-size: 28rpx;
   margin: 20rpx 0;
+  height: 200rpx !important; /* 增加高度 */
+  padding: 20rpx 30rpx !important;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 .next-button {
   align-items: center;
@@ -922,3 +928,30 @@ to {
   opacity: .9;
   transform: scale(.95);
 }
+.target-date {
+  margin: 20rpx 0;
+}
+.target-title {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+.date-picker {
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  padding: 20rpx 30rpx;
+}
+.date-display {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.date {
+  font-size: 32rpx;
+  color: #333;
+}
+.days-left {
+  font-size: 24rpx;
+  color: #666;
+}
+

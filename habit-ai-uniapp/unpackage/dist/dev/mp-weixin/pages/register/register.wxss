@@ -32,19 +32,53 @@
 }
 .avatar-section {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
   margin-bottom: 60rpx;
 }
-.avatar {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
-  margin-bottom: 20rpx;
+.avatar-wrapper {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 200rpx;  /* 减小头像容器大小 */
+  height: 200rpx;
 }
+.avatar-wrapper:after {
+  border: none;
+}
+.avatar {
+  width: 200rpx;  /* 减小头像大小 */
+  height: 200rpx;
+  border-radius: 50%;  /* 保持圆形 */
+}
+
+/* 移除不需要的样式 */
+.nickname-wrapper,
+.nickname-label,
+.nickname-input,
 .tip {
+  display: none;
+}
+.nickname-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 20rpx;
+}
+.nickname-label {
   font-size: 28rpx;
   color: #5c6b7a;
+}
+.nickname-input {
+  width: 300rpx;
+  height: 80rpx;
+  background: #f5f7fa;
+  border-radius: 10rpx;
+  padding: 0 20rpx;
+  font-size: 32rpx;
+  color: #2c3e50;
+  text-align: center;
 }
 .form-section {
   display: flex;
@@ -82,4 +116,20 @@
 }
 .submit-button:active {
   opacity: 0.9;
+}
+.radio-group {
+  display: flex;
+  gap: 20rpx;
+  flex-wrap: wrap;
+}
+.radio-item {
+  padding: 20rpx 40rpx;
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  font-size: 28rpx;
+  color: #2c3e50;
+}
+.radio-item-active {
+  background: var(--theme-color);
+  color: #fff;
 }

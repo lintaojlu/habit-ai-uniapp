@@ -3,6 +3,7 @@
   "navigationBarBackgroundColor": "#ffffff",
   "navigationBarTextStyle": "black",
   "usingComponents": {
-    "reward-card": "../../components/reward-card"
+    "reward-card": "../../components/reward-card",
+    "conv-card": "../../components/conv-card"
   }
 }

@@ -1,5 +1,13 @@
 <template>
   <view class="container">
+    <!-- 添加 conv-card 组件 -->
+    <conv-card
+        v-if="showConvCard"
+        :show="showConvCard"
+        :emoji="aiMessage.emoji"
+        :suggestions="aiMessage.suggestions"
+        @updateShow="showConvCard = $event"
+    />
     <reward-card
         v-if="showRewardCard"
         :title="rewardTitle"
@@ -31,9 +39,9 @@
         <view v-if="isOrderMode" class="complete-order-btn" @tap="completeOrder">完成排序</view>
       </view>
       <view class="ai-message">
-        <view class="ai-message-card">
-          <text class="ai-message-icon">👩🏻‍</text>
-          <text class="ai-message-content">检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！</text>
+        <view class="ai-message-card" @tap="handleAiMessageClick">
+          <text class="ai-message-icon">{{ aiMessage.emoji }}</text>
+          <text class="ai-message-content">{{ aiMessage.content }}</text>
         </view>
       </view>
     </view>
@@ -116,7 +124,7 @@
                 </view>
               </view>
               <view class="expand-button" @tap.stop="toggleCardExpand(habit.id)">
-                <text class="expand-text">{{ expandedCards[habit.id] ? '收起历程' : '查看历程' }}</text>
+                <text class="expand-text">{{ expandedCards[habit.id] ? '收起日志' : '查看培育日志' }}</text>
                 <text class="expand-icon">{{ expandedCards[habit.id] ? '↑' : '↓' }}</text>
               </view>
             </view>
@@ -174,9 +182,11 @@
 <script>
 import {defineComponent} from 'vue'
 import RewardCard from '@/components/reward-card.vue'
+import ConvCard from "@/components/conv-card.vue";
 
 export default defineComponent({
   components: {
+    ConvCard,
     RewardCard
   },
   data() {
@@ -202,7 +212,21 @@ export default defineComponent({
       hours: 0,
       minutes: 0,
       seconds: 0,
-      timer: null
+      timer: null,
+      showConvCard: false,
+      aiMessage: {
+        emoji: '👩🏻‍',
+        content: '检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！',
+        suggestions: [
+          '设定固定的睡觉和起床时间，尽量保持规律。',
+          '创造一个舒适的睡眠环境，保持房间安静、黑暗和凉爽。',
+          '避免在晚上使用电子设备，如手机、平板电脑等。',
+          '晚上避免摄入咖啡因和刺激性食物。',
+          '建立一个放松的睡前常规，如泡个热水澡、阅读书籍等。',
+          '白天进行适量的运动，但避免在临近睡觉时间进行剧烈运动。',
+          '避免午睡时间过长，以免影响晚上的睡眠。'
+        ]
+      }
     }
   },
 
@@ -243,6 +267,28 @@ export default defineComponent({
 
 
   methods: {
+    // 获取当前时间段的建议
+    getTimeBasedSuggestions() {
+      const hour = new Date().getHours()
+
+      // 根据不同时间段返回不同的建议
+      if (hour >= 22 || hour < 6) {
+        this.aiMessage.content = '现在应该休息了，建议尽快睡觉！'
+        this.aiMessage.suggestions = [
+          '立即放下手机，准备睡觉。',
+          '做几个简单的伸展运动。',
+          '冥想5分钟帮助放松。'
+        ]
+      } else if (hour >= 20) {
+        this.aiMessage.content = '检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！'
+        // 使用默认的睡眠建议
+      }
+      // 可以添加更多时间段的建议...
+    },
+    handleAiMessageClick() {
+      console.log('AI Message Clicked')
+      this.showConvCard = true
+    },
     addHabit() {
       uni.navigateTo({
         url: '/pages/add-habit/add-habit'
@@ -317,7 +363,7 @@ export default defineComponent({
           targetDate.getFullYear() !== today.getFullYear()
       ) {
         uni.showToast({
-          title: '请点击习惯卡，在日历中进行补打卡',
+          title: '补打卡机制还未实现，敬请期待~',
           icon: 'none',
           duration: 1000
         })

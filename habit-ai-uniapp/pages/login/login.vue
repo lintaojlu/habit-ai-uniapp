@@ -10,7 +10,7 @@
       <input 
         class="input-field" 
         type="text" 
-        v-model="email" 
+        v-model="telephone" 
         placeholder="手机号"
       />
       <input 
@@ -28,10 +28,12 @@
 </template>
 
 <script>
+import { request } from '@/utils/api.js'
+
 export default {
   data() {
     return {
-      email: '',
+      telephone: '',  // 改为 telephone
       password: ''
     }
   },
@@ -41,8 +43,8 @@ export default {
         url: '/pages/register/register'
       })
     },
-    handleSubmit() {
-      if (!this.email || !this.password) {
+    async handleSubmit() {
+      if (!this.telephone || !this.password) {
         uni.showToast({
           title: '请填写完整信息',
           icon: 'none'
@@ -54,17 +56,37 @@ export default {
         title: '登录中...'
       })
       
-      setTimeout(() => {
-        uni.hideLoading()
-        uni.setStorageSync('userInfo', {
-          email: this.email,
-          nickName: '用户' + Math.floor(Math.random() * 1000)
+      try {
+        const res = await request({
+          url: '/habit-ai/user/login',
+          method: 'POST',
+          data: {
+            telephone: this.telephone,
+            password: this.password
+          }
         })
         
+        // 保存 token 和用户信息
+        uni.setStorageSync('token', res.token)
+        uni.setStorageSync('userId', res.user_id)
+        
+        uni.showToast({
+          title: '登录成功',
+          icon: 'success'
+        })
+        
+        // 跳转到首页
         uni.reLaunch({
           url: '/pages/index/index'
         })
-      }, 1500)
+      } catch (error) {
+        uni.showToast({
+          title: error.message || '登录失败',
+          icon: 'none'
+        })
+      } finally {
+        uni.hideLoading()
+      }
     }
   }
 }

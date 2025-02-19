@@ -8,22 +8,39 @@
           type="text"
           v-model="habitName"
           maxlength="20"
-          placeholder="设定一个可执行的习惯"
+          placeholder="设定一个可执行的习惯，例如：每天写1000字论文。（习惯需要明确且可量化，这样才能有效执行）"
       />
       <view class="input-footer">
         <text class="counter">{{ habitName.length }}/20</text>
 
       </view>
-      <input
+      <textarea
           class="habit-input flag-input"
-          type="text"
           v-model="habitFlag"
-          maxlength="25"
-          placeholder="设定一个目标宣言（选填）"
+          maxlength="100"
+          placeholder="描述你的目标，例如：3.10号预答辩，需要完成完整论文。在这之前每天需要1000字论文，最后还要用一周的时间做Slides。（目标尽可能详细，AI会据此了解你，从而更好帮助你）"
       />
       <view class="input-footer">
-        <text class="counter">{{ habitFlag.length }}/25</text>
+        <text class="counter">{{ habitFlag.length }}/100</text>
       </view>
+
+      <!-- 目标完成时间 -->
+      <view class="target-date">
+        <text class="target-title">目标完成时间</text>
+        <picker
+            mode="date"
+            :value="targetDate"
+            :start="today"
+            @change="onTargetDateChange"
+            class="date-picker"
+        >
+          <view class="date-display">
+            <text class="date">{{ formatTargetDate }}</text>
+            <text class="days-left">(还有 {{ daysLeft }} 天)</text>
+          </view>
+        </picker>
+      </view>
+      
 
       <!-- 提醒时间选择 -->
       <view class="reminder-times">
@@ -214,7 +231,12 @@ function generateUUID() {
 
 export default {
   data() {
+    const today = new Date()
+    const defaultTarget = new Date()
+    defaultTarget.setDate(today.getDate() + 21) // 默认21天后
     return {
+      today: this.formatDate(today),
+      targetDate: this.formatDate(defaultTarget),
       currentStep: 1,
       habitName: '',
       habitFlag: '',
@@ -351,6 +373,18 @@ export default {
   },
 
   computed: {
+    formatTargetDate() {
+      const date = new Date(this.targetDate)
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+    },
+    
+    daysLeft() {
+      const target = new Date(this.targetDate)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      target.setHours(0, 0, 0, 0)
+      return Math.ceil((target - today) / (1000 * 60 * 60 * 24))
+    },
     timePeriod() {
       const hour = parseInt(this.reminderTime.split(':')[0])
       return hour >= 12 ? 'PM' : 'AM'
@@ -396,6 +430,16 @@ export default {
   },
 
   methods: {
+    formatDate(date) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    },
+
+    onTargetDateChange(e) {
+      this.targetDate = e.detail.value
+    },
     getTimePeriod(time) {
       const hour = parseInt(time.split(':')[0])
       return hour >= 12 ? '下午' : '上午'
@@ -449,9 +493,6 @@ export default {
       }
     },
 
-    onTimeChange(e) {
-      this.reminderTime = e.detail.value
-    },
 
     skipReminder() {
       this.saveHabit()
@@ -494,6 +535,7 @@ export default {
           createTime: Date.now(),
           updateTime: Date.now(),
           completed: [],
+          targetDate: this.targetDate,
           notes: []
         }
         habits.push(newHabit)
@@ -974,6 +1016,7 @@ export default {
 
 .habit-input {
   background: #f5f7fa;
+  font-size: 28rpx;
   border-radius: 20rpx;
   box-sizing: border-box;
   color: #2c3e50;
@@ -987,6 +1030,11 @@ export default {
   background: #edf0f5;
   font-size: 28rpx;
   margin: 20rpx 0;
+  height: 200rpx !important; /* 增加高度 */
+  padding: 20rpx 30rpx !important;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .next-button {
@@ -1964,4 +2012,38 @@ export default {
   opacity: .9;
   transform: scale(.95);
 }
+
+
+.target-date {
+  margin: 20rpx 0;
+}
+
+.target-title {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+
+.date-picker {
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  padding: 20rpx 30rpx;
+}
+
+.date-display {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.date {
+  font-size: 32rpx;
+  color: #333;
+}
+
+.days-left {
+  font-size: 24rpx;
+  color: #666;
+}
+
 </style>
