@@ -273,6 +273,12 @@ const _sfc_main = common_vendor.defineComponent({
             habits[habitIndex].streak = res.data.streak;
             common_vendor.index.setStorageSync("habits", habits);
           }
+          if (res.data.message) {
+            this.aiMessage = {
+              emoji: res.data.message.emoji,
+              content: res.data.message.content
+            };
+          }
           this.showRewardCard = true;
           this.rewardTitle = "打卡成功！";
           this.rewardMessage = "";
@@ -427,7 +433,7 @@ const _sfc_main = common_vendor.defineComponent({
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("log", "at pages/index/index.vue:674", "ActionSheet 关闭", err);
+          common_vendor.index.__f__("log", "at pages/index/index.vue:682", "ActionSheet 关闭", err);
         }
       });
     },
@@ -573,7 +579,7 @@ const _sfc_main = common_vendor.defineComponent({
           this.translateX = 0;
         }, 50);
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:841", "获取窗口信息失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:849", "获取窗口信息失败:", error);
         this.viewMode = mode;
         this.translateX = 0;
       }
@@ -809,7 +815,7 @@ const _sfc_main = common_vendor.defineComponent({
               });
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1124", "Share file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:1132", "Share file error:", err);
               common_vendor.index.showToast({
                 title: "导出失败",
                 icon: "none"
@@ -817,14 +823,14 @@ const _sfc_main = common_vendor.defineComponent({
             }
           });
         } catch (err) {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1132", "File operation error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:1140", "File operation error:", err);
           common_vendor.index.showToast({
             title: "导出失败",
             icon: "none"
           });
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1139", "Export error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1147", "Export error:", error);
         common_vendor.index.showToast({
           title: "导出失败",
           icon: "none"
@@ -869,7 +875,7 @@ const _sfc_main = common_vendor.defineComponent({
           }
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1186", "Import error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1194", "Import error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -909,7 +915,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1232", "Merge error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1240", "Merge error:", error);
         common_vendor.index.showToast({
           title: "合并失败",
           icon: "none"
@@ -925,7 +931,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1249", "Overwrite error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1257", "Overwrite error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -975,7 +981,7 @@ const _sfc_main = common_vendor.defineComponent({
                 }
                 this.performImport(importData);
               } catch (parseError) {
-                common_vendor.index.__f__("error", "at pages/index/index.vue:1301", "Parse error:", parseError);
+                common_vendor.index.__f__("error", "at pages/index/index.vue:1309", "Parse error:", parseError);
                 common_vendor.index.showToast({
                   title: "文件格式错误",
                   icon: "none"
@@ -983,7 +989,7 @@ const _sfc_main = common_vendor.defineComponent({
               }
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1309", "Read file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:1317", "Read file error:", err);
               common_vendor.index.showToast({
                 title: "读取文件失败",
                 icon: "none"
@@ -992,7 +998,7 @@ const _sfc_main = common_vendor.defineComponent({
           });
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1318", "Choose file error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:1326", "Choose file error:", err);
           const systemInfo = common_vendor.index.getSystemInfoSync();
           const isIOS = systemInfo.platform === "ios";
           if (isIOS) {
@@ -1033,7 +1039,7 @@ const _sfc_main = common_vendor.defineComponent({
           };
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1366", "获取 AI 建议失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1374", "获取 AI 建议失败:", error);
       }
     }
   },

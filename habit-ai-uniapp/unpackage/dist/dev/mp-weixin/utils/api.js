@@ -79,7 +79,11 @@ const apiService = {
       data: {
         habit_id: habitId,
         completed: ["2025-02-18T07:00:00Z", "2025-02-20T07:00:00Z", "2025-02-21T07:00:00Z"],
-        streak: { current: 3, longest: 3, longest_start: "2025-02-18T00:00:00Z", longest_end: "2025-02-20T00:00:00Z" }
+        streak: { current: 3, longest: 3, longest_start: "2025-02-18T00:00:00Z", longest_end: "2025-02-20T00:00:00Z" },
+        message: {
+          emoji: "🎉",
+          content: "打卡成功"
+        }
       }
     });
   },

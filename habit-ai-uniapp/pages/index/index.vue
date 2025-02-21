@@ -504,6 +504,14 @@ export default defineComponent({
             habits[habitIndex].streak = res.data.streak
             uni.setStorageSync('habits', habits)
           }
+          
+          // 更新 AI 消息
+          if (res.data.message) {
+            this.aiMessage = {
+              emoji: res.data.message.emoji,
+              content: res.data.message.content
+            }
+          }
 
           // 显示打卡成功卡片
           this.showRewardCard = true
