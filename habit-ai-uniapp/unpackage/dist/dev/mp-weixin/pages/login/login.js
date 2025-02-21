@@ -6,7 +6,6 @@ const _sfc_main = {
   data() {
     return {
       telephone: "",
-      // 改为 telephone
       password: ""
     };
   },
@@ -28,23 +27,43 @@ const _sfc_main = {
         title: "登录中..."
       });
       try {
-        const res = await utils_api.request({
-          url: "/habit-ai/user/login",
-          method: "POST",
-          data: {
-            telephone: this.telephone,
-            password: this.password
+        const res = await utils_api.apiService.login({
+          telephone: this.telephone,
+          password: this.password
+        });
+        if (res.status === "success") {
+          common_vendor.index.clearStorageSync();
+          common_vendor.index.setStorageSync("token", res.token);
+          const userInfo = await utils_api.apiService.getUserInfo();
+          if (userInfo.status === "success") {
+            common_vendor.index.setStorageSync("userInfo", userInfo.data);
+            common_vendor.index.__f__("log", "at pages/login/login.vue:77", "get userInfo from server", userInfo.data);
           }
-        });
-        common_vendor.index.setStorageSync("token", res.token);
-        common_vendor.index.setStorageSync("userId", res.user_id);
-        common_vendor.index.showToast({
-          title: "登录成功",
-          icon: "success"
-        });
-        common_vendor.index.reLaunch({
-          url: "/pages/index/index"
-        });
+          const habitList = await utils_api.apiService.getHabitList();
+          if (habitList.status === "success") {
+            this.habits = habitList.data.map((habit) => ({
+              ...habit,
+              icon: habit.icon || "✨",
+              color: habit.color || "$theme-color"
+            }));
+            common_vendor.index.setStorageSync("habits", habitList.data);
+            common_vendor.index.__f__("log", "at pages/login/login.vue:91", "get habits from server", habitList.data);
+          }
+          const response = await utils_api.apiService.getAICharacterList();
+          if (response.status === "success") {
+            common_vendor.index.setStorageSync("aiCharacters", response.data);
+            common_vendor.index.__f__("log", "at pages/login/login.vue:98", "get aiCharacters from server", response.data);
+          }
+          common_vendor.index.showToast({
+            title: "登录成功",
+            icon: "success"
+          });
+          common_vendor.index.reLaunch({
+            url: "/pages/index/index"
+          });
+        } else {
+          throw new Error(res.message || "登录失败");
+        }
       } catch (error) {
         common_vendor.index.showToast({
           title: error.message || "登录失败",

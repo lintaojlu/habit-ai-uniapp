@@ -148,3 +148,16 @@
     transform: translateY(-10rpx);
 }
 }
+.message-text {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: hsla(0,0%,100%,.9);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 移除不需要的样式 */
+.bubble-list,
+.bubble-item {
+  display: none;
+}

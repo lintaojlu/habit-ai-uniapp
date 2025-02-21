@@ -3,7 +3,7 @@
     <view class="logo-section">
       <image class="poster" src="/static/poster.png" mode="aspectFit" />
       <text class="app-name">HabitAI</text>
-      <text class="slogan">私人 AI，轻松养成好习惯</text>
+      <text class="slogan">Take easy steps to achieve your goals!</text>
     </view>
 
     <view class="form-section">
@@ -21,19 +21,19 @@
       />
       <button class="submit-button" @tap="handleSubmit">登录</button>
       <text class="switch-mode" @tap="goToRegister">
-        没有账号？立即注册
+        新来的？点我点我😎
       </text>
     </view>
   </view>
 </template>
 
 <script>
-import { request } from '@/utils/api.js'
+import { apiService } from '@/utils/api.js'
 
 export default {
   data() {
     return {
-      telephone: '',  // 改为 telephone
+      telephone: '',
       password: ''
     }
   },
@@ -57,28 +57,60 @@ export default {
       })
       
       try {
-        const res = await request({
-          url: '/habit-ai/user/login',
-          method: 'POST',
-          data: {
-            telephone: this.telephone,
-            password: this.password
+        const res = await apiService.login({
+          telephone: this.telephone,
+          password: this.password
+        })
+        
+        if (res.status === 'success') {
+          // 清空本地存储
+          uni.clearStorageSync();
+
+
+          // 保存 token 和用户信息
+          uni.setStorageSync('token', res.token)
+          
+          // 获取用户详细信息
+          const userInfo = await apiService.getUserInfo()
+          if (userInfo.status === 'success') {
+            uni.setStorageSync('userInfo', userInfo.data)
+            console.log("get userInfo from server", userInfo.data)
           }
-        })
-        
-        // 保存 token 和用户信息
-        uni.setStorageSync('token', res.token)
-        uni.setStorageSync('userId', res.user_id)
-        
-        uni.showToast({
-          title: '登录成功',
-          icon: 'success'
-        })
-        
-        // 跳转到首页
-        uni.reLaunch({
-          url: '/pages/index/index'
-        })
+
+          // 获取习惯列表
+          const habitList = await apiService.getHabitList()
+          if (habitList.status === 'success') {
+              // 处理 habitList.data，确保每个习惯都有 icon 和 color
+              this.habits = habitList.data.map(habit => ({
+                  ...habit,
+                  icon: habit.icon || "✨",
+                  color: habit.color || '$theme-color'
+              }))
+              // 更新本地存储和数据
+              uni.setStorageSync('habits', habitList.data)
+              console.log("get habits from server", habitList.data)
+          }
+
+          // 获取AI角色列表
+          const response = await apiService.getAICharacterList()
+          if (response.status === 'success') {
+            uni.setStorageSync('aiCharacters', response.data)
+            console.log("get aiCharacters from server", response.data)
+          }
+              
+          
+          uni.showToast({
+            title: '登录成功',
+            icon: 'success'
+          })
+          
+          // 跳转到首页
+          uni.reLaunch({
+            url: '/pages/index/index'
+          })
+        } else {
+          throw new Error(res.message || '登录失败')
+        }
       } catch (error) {
         uni.showToast({
           title: error.message || '登录失败',

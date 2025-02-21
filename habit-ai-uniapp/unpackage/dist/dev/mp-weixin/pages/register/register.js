@@ -10,19 +10,21 @@ const _sfc_main = {
         avatarUrl: "",
         nickName: "",
         openId: ""
-        // 添加 openId 字段
       },
       phone: "",
       password: "",
       betaCode: "",
-      aiCharacterName: "default",
-      // 添加默认 AI 角色
-      aiRoles: [
-        { label: "温柔姐姐", value: "gentle" },
-        { label: "严厉哥哥", value: "strict" },
-        { label: "毒舌", value: "sharp_tongue" }
-      ]
+      aiCharacters: [],
+      // 添加 AI 角色列表
+      selectedCharacterId: "",
+      // 添加选中的角色 ID
+      aiCharacterName: ""
+      // 修改默认值为空字符串
     };
+  },
+  // 添加 created 生命周期钩子
+  created() {
+    this.loadAICharacters();
   },
   methods: {
     goBack() {
@@ -42,7 +44,7 @@ const _sfc_main = {
           });
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/register/register.vue:136", "获取用户信息失败：", err);
+          common_vendor.index.__f__("error", "at pages/register/register.vue:143", "获取用户信息失败：", err);
           common_vendor.index.showToast({
             title: "获取信息失败",
             icon: "none"
@@ -57,77 +59,91 @@ const _sfc_main = {
     selectRole(value) {
       this.aiCharacterName = value;
     },
+    async loadAICharacters() {
+      try {
+        const response = await utils_api.apiService.getAICharacterList();
+        if (response.status === "success") {
+          this.aiCharacters = response.data;
+          if (this.aiCharacters.length > 0) {
+            this.selectCharacter(this.aiCharacters[0]);
+          }
+        }
+        common_vendor.index.setStorageSync("aiCharacters", response.data);
+      } catch (error) {
+        common_vendor.index.__f__("error", "at pages/register/register.vue:174", "加载 AI 角色失败:", error);
+        common_vendor.index.showToast({
+          title: "加载角色失败",
+          icon: "none"
+        });
+      }
+    },
+    selectCharacter(character) {
+      this.selectedCharacterId = character.character_id;
+      this.aiCharacterName = character.name;
+    },
+    async onChooseAvatar(e) {
+      const { avatarUrl } = e.detail;
+      this.userInfo.avatarUrl = avatarUrl;
+      common_vendor.index.__f__("log", "at pages/register/register.vue:191", "选择的头像 URL:", avatarUrl);
+      try {
+        common_vendor.index.showToast({
+          title: "头像设置成功",
+          icon: "success"
+        });
+      } catch (error) {
+        common_vendor.index.__f__("error", "at pages/register/register.vue:201", "获取 openid 失败：", error);
+        common_vendor.index.showToast({
+          title: "头像设置成功",
+          icon: "success"
+        });
+      }
+    },
     async handleRegister() {
-      if (!this.userInfo.avatarUrl) {
-        common_vendor.index.showToast({
-          title: "请先选择头像",
-          icon: "none"
-        });
-        return;
-      }
-      if (!this.userInfo.nickName) {
-        common_vendor.index.showToast({
-          title: "请输入昵称",
-          icon: "none"
-        });
-        return;
-      }
-      if (!this.phone || !/^1\d{10}$/.test(this.phone)) {
-        common_vendor.index.showToast({
-          title: "请输入正确的手机号",
-          icon: "none"
-        });
-        return;
-      }
-      if (!this.password || this.password.length < 6) {
-        common_vendor.index.showToast({
-          title: "密码不能少于6位",
-          icon: "none"
-        });
-        return;
-      }
       common_vendor.index.showLoading({
         title: "注册中..."
       });
       try {
-        const registerData = {
-          avatarUrl: this.userInfo.avatarUrl,
-          nickName: this.userInfo.nickName,
+        common_vendor.index.__f__("log", "at pages/register/register.vue:217", "注册参数:", {
           telephone: this.phone,
           password: this.password,
-          wechat_openid: this.userInfo.openId || void 0,
-          registration_code: this.betaCode || void 0,
+          nickname: this.userInfo.nickName,
+          avatar_url: this.userInfo.avatarUrl,
+          wechat_openid: this.userInfo.openId,
+          registration_code: this.betaCode,
           ai_character_name: this.aiCharacterName
-          // 确保这个值被包含在注册数据中
-        };
-        Object.keys(registerData).forEach((key) => {
-          if (registerData[key] === void 0) {
-            delete registerData[key];
-          }
         });
-        const res = await utils_api.request({
-          url: "/habit-ai/user/register",
-          method: "POST",
-          data: registerData
+        const res = await utils_api.apiService.register({
+          telephone: this.phone,
+          password: this.password,
+          nickname: this.userInfo.nickName,
+          avatar_url: this.userInfo.avatarUrl,
+          wechat_openid: this.userInfo.openId,
+          registration_code: this.betaCode,
+          ai_character_name: this.aiCharacterName
         });
-        common_vendor.index.setStorageSync("token", res.token);
-        common_vendor.index.setStorageSync("userInfo", {
-          avatarUrl: this.userInfo.avatarUrl,
-          nickName: this.userInfo.nickName,
-          phone: this.phone,
-          userId: res.user_id,
-          openId: this.userInfo.openId
-        });
-        common_vendor.index.showToast({
-          title: "注册成功",
-          icon: "success"
-        });
-        setTimeout(() => {
-          common_vendor.index.reLaunch({
-            url: "/pages/index/index"
+        common_vendor.index.__f__("log", "at pages/register/register.vue:237", "注册响应:", res);
+        if (res.status === "success") {
+          common_vendor.index.clearStorageSync();
+          this.userInfo.openId = res.openid;
+          this.userInfo.nickName = this.userInfo.nickName;
+          this.userInfo.avatarUrl = this.userInfo.avatarUrl;
+          this.userInfo.aiCharacterName = this.aiCharacterName;
+          common_vendor.index.setStorageSync("userInfo", this.userInfo);
+          common_vendor.index.setStorageSync("token", res.token);
+          common_vendor.index.showToast({
+            title: "注册成功",
+            icon: "success"
           });
-        }, 1500);
+          setTimeout(() => {
+            common_vendor.index.reLaunch({
+              url: "/pages/index/index"
+            });
+          }, 1500);
+        } else {
+          throw new Error(res.message || "注册失败");
+        }
       } catch (error) {
+        common_vendor.index.__f__("error", "at pages/register/register.vue:275", "注册失败:", error);
         common_vendor.index.showToast({
           title: error.message || "注册失败",
           icon: "none"
@@ -135,41 +151,6 @@ const _sfc_main = {
       } finally {
         common_vendor.index.hideLoading();
       }
-    },
-    async onChooseAvatar(e) {
-      const { avatarUrl } = e.detail;
-      this.userInfo.avatarUrl = avatarUrl;
-      try {
-        common_vendor.index.showToast({
-          title: "头像设置成功",
-          icon: "success"
-        });
-      } catch (error) {
-        common_vendor.index.__f__("error", "at pages/register/register.vue:270", "获取 openid 失败：", error);
-        common_vendor.index.showToast({
-          title: "头像设置成功",
-          icon: "success"
-        });
-      }
-    },
-    getUserProfile() {
-      common_vendor.index.getUserProfile({
-        desc: "用于完善会员资料",
-        success: (res) => {
-          this.userInfo.nickName = res.userInfo.nickName;
-          common_vendor.index.showToast({
-            title: "昵称设置成功",
-            icon: "success"
-          });
-        },
-        fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/register/register.vue:290", "获取用户信息失败：", err);
-          common_vendor.index.showToast({
-            title: "获取信息失败",
-            icon: "none"
-          });
-        }
-      });
     }
   }
 };
@@ -188,12 +169,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     k: common_vendor.o(($event) => $data.phone = $event.detail.value),
     l: $data.password,
     m: common_vendor.o(($event) => $data.password = $event.detail.value),
-    n: common_vendor.f($data.aiRoles, (role, index, i0) => {
+    n: common_vendor.f($data.aiCharacters, (character, k0, i0) => {
       return {
-        a: common_vendor.t(role.label),
-        b: index,
-        c: $data.aiCharacterName === role.value ? 1 : "",
-        d: common_vendor.o(($event) => $options.selectRole(role.value), index)
+        a: common_vendor.t(character.icon),
+        b: common_vendor.t(character.name),
+        c: common_vendor.t(character.description),
+        d: character.character_id,
+        e: $data.selectedCharacterId === character.character_id ? 1 : "",
+        f: common_vendor.o(($event) => $options.selectCharacter(character), character.character_id)
       };
     }),
     o: $data.betaCode,

@@ -1,12 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
-function generateUUID() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === "x" ? r : r & 3 | 8;
-    return v.toString(16);
-  });
-}
+const utils_api = require("../../utils/api.js");
 const _sfc_main = {
   data() {
     const today = /* @__PURE__ */ new Date();
@@ -120,7 +114,7 @@ const _sfc_main = {
         }
       ],
       isEdit: false,
-      habitId: null,
+      habit_id: null,
       touchStartX: 0,
       touchStartY: 0,
       matchedEmoji: "✨",
@@ -181,18 +175,14 @@ const _sfc_main = {
   },
   onLoad(options) {
     this.habitName = "";
-    this.habitFlag = "";
-    this.selectedCategory = "";
     this.selectedEmoji = "";
-    this.matchedEmoji = this.emojiMappings.default;
-    this.selectedSuggestion = null;
-    if (options && options.id) {
+    if (options && options.habit_id) {
       this.isEdit = true;
-      this.habitId = options.id;
+      this.habit_id = options.habit_id;
       this.loadHabitData();
     } else {
       this.isEdit = false;
-      this.habitId = null;
+      this.habit_id = null;
     }
     common_vendor.index.setNavigationBarTitle({
       title: this.isEdit ? "编辑习惯" : "添加习惯"
@@ -253,78 +243,28 @@ const _sfc_main = {
         }
       }
     },
-    skipReminder() {
-      this.saveHabit();
-    },
-    saveHabit() {
-      if (!this.habitName.trim()) {
-        common_vendor.index.showToast({
-          title: "请输入习惯名称",
-          icon: "none"
-        });
-        return;
-      }
+    async loadHabitData() {
+      var _a;
       const habits = common_vendor.index.getStorageSync("habits") || [];
-      if (this.isEdit && this.habitId) {
-        const index = habits.findIndex((h) => h.id === this.habitId);
-        if (index !== -1) {
-          const originalHabit = habits[index];
-          habits[index] = {
-            ...originalHabit,
-            // 保留原有数据（包括 id、completed 等）
-            title: this.habitName,
-            flag: this.habitFlag,
-            category: this.selectedCategory,
-            reminderTime: this.reminderTime,
-            updateTime: Date.now()
-          };
-        } else {
-          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:526", "Habit not found:", this.habitId);
-        }
-      } else {
-        const newHabit = {
-          id: generateUUID(),
-          title: this.habitName,
-          flag: this.habitFlag,
-          category: this.selectedCategory,
-          reminderTime: this.reminderTime,
-          createTime: Date.now(),
-          updateTime: Date.now(),
-          completed: [],
-          targetDate: this.targetDate,
-          notes: []
-        };
-        habits.push(newHabit);
-      }
-      common_vendor.index.setStorageSync("habits", habits);
-      common_vendor.index.showToast({
-        title: this.isEdit ? "保存成功" : "添加成功",
-        icon: "success",
-        duration: 500
-      });
-      setTimeout(() => {
-        common_vendor.index.navigateBack();
-      }, 500);
-    },
-    loadHabitData() {
-      const habits = common_vendor.index.getStorageSync("habits") || [];
-      const habit = habits.find((h) => h.id === this.habitId);
+      const habit = habits.find((h) => h.habit_id === this.habit_id);
       if (habit) {
         this.habitName = habit.title;
-        this.habitFlag = habit.flag || "";
+        this.habitFlag = habit.description || "";
         this.selectedCategory = habit.category;
-        this.reminderTime = habit.reminderTime || "12:00";
+        this.reminderTimes = ((_a = habit.alert_time) == null ? void 0 : _a.time) || ["12:00"];
+        this.targetDate = habit.deadline ? new Date(habit.deadline).toISOString().split("T")[0] : this.targetDate;
         if (habit.icon) {
           this.selectedEmoji = habit.icon;
           this.matchedEmoji = habit.icon;
         } else {
           this.matchedEmoji = this.matchHabitEmoji(habit.title);
         }
+        this.selectedColor = habit.color || "#fff";
       } else {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:572", "Failed to find habit in storage:", {
-          searchId: this.habitId,
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:505", "Failed to find habit in storage:", {
+          searchId: this.habit_id,
           availableHabits: habits.map((h) => ({
-            id: h.id,
+            habit_id: h.habit_id,
             title: h.title
           }))
         });
@@ -374,53 +314,12 @@ const _sfc_main = {
       }
       return this.emojiMappings.default;
     },
-    selectCustomHabit: function selectCustomHabit() {
-      var habitEmoji = this.matchHabitEmoji(this.habitName);
-      this.selectedCategory = "custom";
-      var habit = {
-        id: generateUUID(),
-        title: this.habitName,
-        flag: this.habitFlag,
-        category: "custom",
-        icon: habitEmoji,
-        createTime: Date.now(),
-        updateTime: Date.now(),
-        completed: [],
-        notes: []
-      };
-      var habits = common_vendor.index.getStorageSync("habits") || [];
-      habits.push(habit);
-      common_vendor.index.setStorageSync("habits", habits);
-      common_vendor.index.showToast({
-        title: "添加成功",
-        icon: "success",
-        duration: 500
-      });
-      setTimeout(function() {
-        common_vendor.index.navigateBack();
-      }, 500);
-    },
-    selectSuggestion: function selectSuggestion(suggestion) {
-      if (this.selectedSuggestion === suggestion) {
-        this.selectedSuggestion = null;
-        this.habitName = "";
-        this.habitFlag = "";
-        this.matchedEmoji = this.emojiMappings.default;
-        this.selectedEmoji = "";
-      } else {
-        this.habitName = suggestion.title;
-        this.habitFlag = suggestion.flag;
-        this.selectedSuggestion = suggestion;
-        this.matchedEmoji = this.matchHabitEmoji(suggestion.title);
-        this.selectedEmoji = "";
-      }
-    },
     watchHabitNameChange: function watchHabitNameChange() {
       if (!this.selectedEmoji) {
         this.matchedEmoji = this.matchHabitEmoji(this.habitName);
       }
     },
-    completeHabitSetup: function completeHabitSetup() {
+    async completeHabitSetup() {
       if (!this.habitName.trim()) {
         common_vendor.index.showToast({
           title: "请输入习惯名称",
@@ -428,59 +327,72 @@ const _sfc_main = {
         });
         return;
       }
-      const habits = common_vendor.index.getStorageSync("habits") || [];
-      if (this.isEdit && this.habitId) {
-        const index = habits.findIndex((h) => h.id === this.habitId);
-        if (index !== -1) {
-          const originalHabit = habits[index];
-          habits[index] = {
-            ...originalHabit,
-            title: this.habitName.trim(),
-            flag: this.habitFlag.trim(),
-            category: this.selectedCategory || originalHabit.category,
-            icon: this.displayEmoji,
-            color: this.selectedColor,
-            updateTime: Date.now(),
-            reminderTime: this.reminderTime
-          };
-        } else {
-          common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:701", "Failed to find habit to edit:", this.habitId);
-          common_vendor.index.showToast({
-            title: "保存失败，未找到习惯",
-            icon: "none"
-          });
-          return;
-        }
-      } else {
-        const newHabit = {
-          id: generateUUID(),
+      try {
+        const habitData = {
+          habit_id: this.habit_id || null,
           title: this.habitName.trim(),
-          flag: this.habitFlag.trim(),
-          category: this.selectedCategory || "custom",
+          description: this.habitFlag.trim(),
+          alert_time: {
+            days: [0, 1, 2, 3, 4, 5, 6],
+            // 默认每天
+            time: this.reminderTimes
+          },
+          deadline: this.targetDate ? new Date(this.targetDate).toISOString() : null,
           icon: this.displayEmoji,
           color: this.selectedColor,
-          createTime: Date.now(),
-          updateTime: Date.now(),
-          completed: [],
-          notes: [],
-          reminderTime: this.reminderTime
+          category: this.selectedCategory || "custom",
+          order: 0
+          // 新习惯默认添加到最后
         };
-        habits.push(newHabit);
-      }
-      try {
-        common_vendor.index.setStorageSync("habits", habits);
-        common_vendor.index.showToast({
-          title: this.isEdit ? "保存成功" : "添加成功",
-          icon: "success",
-          duration: 500
-        });
-        setTimeout(() => {
-          common_vendor.index.navigateBack();
-        }, 500);
+        if (!this.isEdit) {
+          habitData.completed = [];
+          habitData.streak = {
+            current: 0,
+            longest: 0,
+            longest_start: null,
+            longest_end: null
+          };
+          habitData.is_archived = false;
+        }
+        let res;
+        if (this.isEdit) {
+          res = await utils_api.apiService.updateHabit(this.habit_id, habitData);
+        } else {
+          res = await utils_api.apiService.createHabit(habitData);
+        }
+        if (res.status === "success") {
+          if (!this.isEdit) {
+            habitData.habit_id = res.habit_id;
+          }
+          const habits = common_vendor.index.getStorageSync("habits") || [];
+          if (this.isEdit) {
+            const index = habits.findIndex((h) => h.habit_id === this.habit_id);
+            if (index !== -1) {
+              habits[index] = {
+                ...habits[index],
+                ...habitData
+              };
+            }
+          } else {
+            habits.push(habitData);
+          }
+          common_vendor.index.__f__("log", "at pages/add-habit/add-habit.vue:631", "Updated habits:", habits);
+          common_vendor.index.setStorageSync("habits", habits);
+          common_vendor.index.showToast({
+            title: this.isEdit ? "保存成功" : "添加成功",
+            icon: "success",
+            duration: 500
+          });
+          setTimeout(() => {
+            common_vendor.index.navigateBack();
+          }, 500);
+        } else {
+          throw new Error(res.message || "保存失败");
+        }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:736", "Failed to save habit:", error);
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:647", "Failed to save habit:", error);
         common_vendor.index.showToast({
-          title: "保存失败，请重试",
+          title: error.message || "保存失败，请重试",
           icon: "none"
         });
       }
@@ -721,8 +633,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     Q: common_vendor.t($options.timePeriod),
     R: $data.reminderTime,
     S: common_vendor.o((...args) => $options.onTimeChange && $options.onTimeChange(...args)),
-    T: common_vendor.o((...args) => $options.saveHabit && $options.saveHabit(...args)),
-    U: common_vendor.o((...args) => $options.skipReminder && $options.skipReminder(...args))
+    T: common_vendor.o((...args) => _ctx.saveHabit && _ctx.saveHabit(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

@@ -80,7 +80,7 @@
         </view>
         <text class="habit-name">为"{{ habitName }}"</text>
       </view>
-      <text class="title">选择一个习惯类别</text>
+      <text class="title">选择一个习惯图标</text>
       <view class="search-row">
         <input
             class="search-input"
@@ -215,19 +215,12 @@
         </picker>
       </view>
       <button class="save-button" @tap="saveHabit">保存提醒</button>
-      <text class="skip-link" @tap="skipReminder">稍后再说</text>
     </view>
   </view>
 </template>
 
 <script>
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = Math.random() * 16 | 0
-    const v = c === 'x' ? r : (r & 0x3 | 0x8)
-    return v.toString(16)
-  })
-}
+import { apiService } from '@/utils/api.js'  // 添加这行导入语句
 
 export default {
   data() {
@@ -342,7 +335,7 @@ export default {
         }
       ],
       isEdit: false,
-      habitId: null,
+      habit_id: null,
       touchStartX: 0,
       touchStartY: 0,
 
@@ -409,19 +402,15 @@ export default {
 
   onLoad(options) {
     this.habitName = ''
-    this.habitFlag = ''
-    this.selectedCategory = ''
     this.selectedEmoji = ''
-    this.matchedEmoji = this.emojiMappings.default
-    this.selectedSuggestion = null
 
-    if (options && options.id) {
+    if (options && options.habit_id) {
       this.isEdit = true
-      this.habitId = options.id
+      this.habit_id = options.habit_id
       this.loadHabitData()
     } else {
       this.isEdit = false
-      this.habitId = null
+      this.habit_id = null
     }
 
     uni.setNavigationBarTitle({
@@ -493,86 +482,30 @@ export default {
       }
     },
 
-
-    skipReminder() {
-      this.saveHabit()
-    },
-
-    saveHabit() {
-      if (!this.habitName.trim()) {
-        uni.showToast({
-          title: '请输入习惯名称',
-          icon: 'none'
-        })
-        return
-      }
-
+    async loadHabitData() {
       const habits = uni.getStorageSync('habits') || []
-
-      if (this.isEdit && this.habitId) {
-        const index = habits.findIndex(h => h.id === this.habitId)
-        if (index !== -1) {
-          const originalHabit = habits[index]
-          habits[index] = {
-            ...originalHabit,
-            // 保留原有数据（包括 id、completed 等）
-            title: this.habitName,
-            flag: this.habitFlag,
-            category: this.selectedCategory,
-            reminderTime: this.reminderTime,
-            updateTime: Date.now()
-          }
-        } else {
-          console.error('Habit not found:', this.habitId)
-        }
-      } else {
-        const newHabit = {
-          id: generateUUID(),
-          title: this.habitName,
-          flag: this.habitFlag,
-          category: this.selectedCategory,
-          reminderTime: this.reminderTime,
-          createTime: Date.now(),
-          updateTime: Date.now(),
-          completed: [],
-          targetDate: this.targetDate,
-          notes: []
-        }
-        habits.push(newHabit)
-      }
-
-      uni.setStorageSync('habits', habits)
-      uni.showToast({
-        title: this.isEdit ? '保存成功' : '添加成功',
-        icon: 'success',
-        duration: 500
-      })
-
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 500)
-    },
-
-    loadHabitData() {
-      const habits = uni.getStorageSync('habits') || []
-      const habit = habits.find(h => h.id === this.habitId)
+      const habit = habits.find(h => h.habit_id === this.habit_id)
 
       if (habit) {
         this.habitName = habit.title
-        this.habitFlag = habit.flag || ''
+        this.habitFlag = habit.description || ''
         this.selectedCategory = habit.category
-        this.reminderTime = habit.reminderTime || '12:00'
+        this.reminderTimes = habit.alert_time?.time || ['12:00']
+        this.targetDate = habit.deadline ? new Date(habit.deadline).toISOString().split('T')[0] : this.targetDate
+        
         if (habit.icon) {
           this.selectedEmoji = habit.icon
           this.matchedEmoji = habit.icon
         } else {
           this.matchedEmoji = this.matchHabitEmoji(habit.title)
         }
+        
+        this.selectedColor = habit.color || '#fff'
       } else {
         console.error('Failed to find habit in storage:', {
-          searchId: this.habitId,
+          searchId: this.habit_id,
           availableHabits: habits.map(h => ({
-            id: h.id,
+            habit_id: h.habit_id,
             title: h.title
           }))
         })
@@ -626,53 +559,13 @@ export default {
 
       return this.emojiMappings.default;
     },
-    selectCustomHabit: function selectCustomHabit() {
-      var habitEmoji = this.matchHabitEmoji(this.habitName);
-      this.selectedCategory = "custom";
-      var habit = {
-        id: generateUUID(),
-        title: this.habitName,
-        flag: this.habitFlag,
-        category: "custom",
-        icon: habitEmoji,
-        createTime: Date.now(),
-        updateTime: Date.now(),
-        completed: [],
-        notes: []
-      };
-      var habits = uni.getStorageSync("habits") || [];
-      habits.push(habit);
-      uni.setStorageSync("habits", habits);
-      uni.showToast({
-        title: "添加成功",
-        icon: "success",
-        duration: 500
-      });
-      setTimeout(function () {
-        uni.navigateBack();
-      }, 500);
-    },
-    selectSuggestion: function selectSuggestion(suggestion) {
-      if (this.selectedSuggestion === suggestion) {
-        this.selectedSuggestion = null;
-        this.habitName = "";
-        this.habitFlag = "";
-        this.matchedEmoji = this.emojiMappings.default;
-        this.selectedEmoji = "";
-      } else {
-        this.habitName = suggestion.title;
-        this.habitFlag = suggestion.flag;
-        this.selectedSuggestion = suggestion;
-        this.matchedEmoji = this.matchHabitEmoji(suggestion.title);
-        this.selectedEmoji = "";
-      }
-    },
+
     watchHabitNameChange: function watchHabitNameChange() {
       if (!this.selectedEmoji) {
         this.matchedEmoji = this.matchHabitEmoji(this.habitName);
       }
     },
-    completeHabitSetup: function completeHabitSetup() {
+    async completeHabitSetup() {
       if (!this.habitName.trim()) {
         uni.showToast({
           title: "请输入习惯名称",
@@ -681,61 +574,79 @@ export default {
         return;
       }
 
-      const habits = uni.getStorageSync("habits") || [];
-
-      if (this.isEdit && this.habitId) {
-        const index = habits.findIndex(h => h.id === this.habitId);
-        if (index !== -1) {
-          const originalHabit = habits[index];
-          habits[index] = {
-            ...originalHabit,
-            title: this.habitName.trim(),
-            flag: this.habitFlag.trim(),
-            category: this.selectedCategory || originalHabit.category,
-            icon: this.displayEmoji,
-            color: this.selectedColor,
-            updateTime: Date.now(),
-            reminderTime: this.reminderTime
-          };
-        } else {
-          console.error("Failed to find habit to edit:", this.habitId);
-          uni.showToast({
-            title: "保存失败，未找到习惯",
-            icon: "none"
-          });
-          return;
-        }
-      } else {
-        const newHabit = {
-          id: generateUUID(),
+      try {
+        const habitData = {
+          habit_id: this.habit_id || null,
           title: this.habitName.trim(),
-          flag: this.habitFlag.trim(),
-          category: this.selectedCategory || "custom",
+          description: this.habitFlag.trim(),
+          alert_time: {
+            days: [0, 1, 2, 3, 4, 5, 6], // 默认每天
+            time: this.reminderTimes
+          },
+          deadline: this.targetDate ? new Date(this.targetDate).toISOString() : null,
           icon: this.displayEmoji,
           color: this.selectedColor,
-          createTime: Date.now(),
-          updateTime: Date.now(),
-          completed: [],
-          notes: [],
-          reminderTime: this.reminderTime
+          category: this.selectedCategory || "custom",
+          order: 0 // 新习惯默认添加到最后
         };
-        habits.push(newHabit);
-      }
 
-      try {
-        uni.setStorageSync("habits", habits);
-        uni.showToast({
-          title: this.isEdit ? "保存成功" : "添加成功",
-          icon: "success",
-          duration: 500
-        });
-        setTimeout(() => {
-          uni.navigateBack();
-        }, 500);
+        // 只在创建新习惯时添加这些字段
+        if (!this.isEdit) {
+          habitData.completed = [];
+          habitData.streak = {
+            current: 0,
+            longest: 0,
+            longest_start: null,
+            longest_end: null
+          };
+          habitData.is_archived = false;
+        }
+
+        let res;
+        if (this.isEdit) {
+          res = await apiService.updateHabit(this.habit_id, habitData);
+        } else {
+          res = await apiService.createHabit(habitData);
+        }
+
+        if (res.status === 'success') {
+          // API 调用成功，更新本地存储
+          if (!this.isEdit) {
+            habitData.habit_id = res.habit_id;  // 新建时使用返回的 habit_id
+          }
+
+          const habits = uni.getStorageSync("habits") || [];
+          
+          if (this.isEdit) {
+            const index = habits.findIndex(h => h.habit_id === this.habit_id);
+            if (index !== -1) {
+              habits[index] = {
+                ...habits[index],
+                ...habitData
+              };
+            }
+          } else {
+            habits.push(habitData);
+          }
+          console.log("Updated habits:", habits);
+
+          uni.setStorageSync("habits", habits);
+          uni.showToast({
+            title: this.isEdit ? "保存成功" : "添加成功",
+            icon: "success",
+            duration: 500
+          });
+          
+          setTimeout(() => {
+            uni.navigateBack();
+          }, 500);
+        } else {
+          throw new Error(res.message || '保存失败');
+        }
       } catch (error) {
         console.error("Failed to save habit:", error);
         uni.showToast({
-          title: "保存失败，请重试",
+          title: error.message || "保存失败，请重试",
           icon: "none"
         });
       }

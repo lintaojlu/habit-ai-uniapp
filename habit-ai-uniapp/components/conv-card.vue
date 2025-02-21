@@ -8,24 +8,19 @@
       <!-- 日期显示 -->
       <view class="conv-date">{{ formattedDate }}</view>
 
-      <!-- 建议内容区域 -->
+      <!-- 对话内容区域 -->
       <view class="conv-content">
         <view class="chat-message">
           <view class="avatar">{{ emoji }}</view>
           <view class="chat-bubble">
-            <view class="bubble-title">以下是一些养成早睡早起好习惯的建议:</view>
-            <view class="bubble-list">
-              <view class="bubble-item" v-for="(item, index) in suggestions" :key="index">
-                {{ index + 1 }}. {{ item }}
-              </view>
-            </view>
+            <text class="message-text">{{ content }}</text>
           </view>
         </view>
       </view>
 
       <!-- 底部提示 -->
       <view class="swipe-hint">
-        <text class="hint-text">下滑关闭并保存</text>
+        <text class="hint-text">下滑关闭</text>
         <text class="arrow-icon">↓</text>
       </view>
     </view>
@@ -40,13 +35,13 @@ export default {
       type: Boolean,
       default: false
     },
-    suggestions: {
-      type: Array,
-      default: () => []
-    },
     emoji: {
       type: String,
-      default: '👩🏻‍'
+      default: '🤖'
+    },
+    content: {
+      type: String,
+      default: ''
     }
   },
 
@@ -109,12 +104,10 @@ export default {
     closeCard() {
       this.isClosingDown = true
       setTimeout(() => {
-        this.$emit('update:show', false)
+        this.$emit('updateShow', false)
         this.isClosingDown = false
       }, 500)
-    },
-
-    handleContainerClick() {}
+    }
   }
 }
 </script>
@@ -286,5 +279,19 @@ export default {
   50% {
     transform: translateY(-10rpx);
   }
+}
+
+.message-text {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: hsla(0,0%,100%,.9);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 移除不需要的样式 */
+.bubble-list,
+.bubble-item {
+  display: none;
 }
 </style>

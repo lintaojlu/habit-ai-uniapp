@@ -40,16 +40,16 @@
   border: none;
   padding: 0;
   margin: 0;
-  width: 200rpx;  /* 减小头像容器大小 */
+  width: 200rpx; /* 减小头像容器大小 */
   height: 200rpx;
 }
 .avatar-wrapper:after {
   border: none;
 }
 .avatar {
-  width: 200rpx;  /* 减小头像大小 */
+  width: 200rpx; /* 减小头像大小 */
   height: 200rpx;
-  border-radius: 50%;  /* 保持圆形 */
+  border-radius: 50%; /* 保持圆形 */
 }
 
 /* 移除不需要的样式 */
@@ -133,3 +133,41 @@
   background: var(--theme-color);
   color: #fff;
 }
+.character-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.character-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  background: #f5f7fa;
+  border-radius: 20rpx;
+  gap: 20rpx;
+}
+.character-item-active {
+  background: var(--theme-color);
+}
+.character-item-active .character-name,
+.character-item-active .character-desc {
+  color: #ffffff;
+}
+.character-icon {
+  font-size: 48rpx;
+}
+.character-info {
+  flex: 1;
+}
+.character-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 8rpx;
+}
+.character-desc {
+  font-size: 26rpx;
+  color: #5c6b7a;
+}
+
+/* 移除旧的 radio-group 相关样式 */

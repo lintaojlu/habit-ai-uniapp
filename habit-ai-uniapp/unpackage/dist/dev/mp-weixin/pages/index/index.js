@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const utils_api = require("../../utils/api.js");
 const RewardCard = () => "../../components/reward-card.js";
 const ConvCard = () => "../../components/conv-card.js";
 const _sfc_main = common_vendor.defineComponent({
@@ -9,6 +10,7 @@ const _sfc_main = common_vendor.defineComponent({
   },
   data() {
     return {
+      nickname: "",
       weekDays: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
       habits: [],
       currentYear: 0,
@@ -33,31 +35,69 @@ const _sfc_main = common_vendor.defineComponent({
       timer: null,
       showConvCard: false,
       aiMessage: {
-        emoji: "👩🏻‍",
-        content: "检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！",
-        suggestions: [
-          "设定固定的睡觉和起床时间，尽量保持规律。",
-          "创造一个舒适的睡眠环境，保持房间安静、黑暗和凉爽。",
-          "避免在晚上使用电子设备，如手机、平板电脑等。",
-          "晚上避免摄入咖啡因和刺激性食物。",
-          "建立一个放松的睡前常规，如泡个热水澡、阅读书籍等。",
-          "白天进行适量的运动，但避免在临近睡觉时间进行剧烈运动。",
-          "避免午睡时间过长，以免影响晚上的睡眠。"
-        ]
-      }
+        emoji: "😆",
+        content: "欢迎来到 Habit AI！点我，一起达成目标！"
+      },
+      perfectDays: [],
+      // 新增：完全打卡日期列表
+      currentMessageIndex: 0,
+      default_message_list: [
+        {
+          emoji: "😳",
+          content: "你好 {nickname} 欢迎来到 Habit AI！点我看看！"
+        },
+        {
+          emoji: "👇🧐",
+          content: "看到下面加号了吗？点击它添加一个习惯/任务！"
+        },
+        {
+          emoji: "💪😙",
+          content: "别忘了告诉我你的目标，让我来监督你！"
+        },
+        {
+          emoji: "😠",
+          content: "说到做到！我会经常来提醒你，不准嫌我烦！"
+        },
+        {
+          emoji: "🥺",
+          content: "进度条会显示当日进展，一定要完成哦！"
+        },
+        {
+          emoji: "😏",
+          content: "完成所有任务你将收获完美一天，让我们看看你能连胜多少天！"
+        },
+        {
+          emoji: "😈",
+          content: "如果有问题可以随时告诉我，我也不是什么坏人呢嘻嘻！"
+        },
+        {
+          emoji: "🫣",
+          content: "开始吧！我肯定不偷看！"
+        },
+        {
+          emoji: "🫨",
+          content: "啊啊啊快开始吧！"
+        }
+      ]
     };
   },
   computed: {
     getTodayCompletedCount() {
       const today = /* @__PURE__ */ new Date();
-      const todayTimestamp = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      ).getTime();
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth();
+      const todayDate = today.getDate();
       return this.habits.filter(
-        (habit) => habit.completed.includes(todayTimestamp)
+        (habit) => habit.completed.some((dateStr) => {
+          const completedDate = new Date(dateStr);
+          return completedDate.getFullYear() === todayYear && completedDate.getMonth() === todayMonth && completedDate.getDate() === todayDate;
+        })
       ).length;
+    },
+    getTodayCompletionRate() {
+      if (this.habits.length === 0)
+        return 0;
+      return this.getTodayCompletedCount / this.habits.length * 100;
     },
     currentStreak() {
       if (!this.habits.length)
@@ -67,54 +107,109 @@ const _sfc_main = common_vendor.defineComponent({
       let streak = 0;
       let currentDate = new Date(today);
       while (true) {
-        const timestamp = currentDate.getTime();
-        const allHabitsCompleted = this.habits.every(
-          (habit) => habit.completed.includes(timestamp)
-        );
-        if (!allHabitsCompleted)
-          break;
-        streak++;
+        const dateStr = currentDate.toISOString().split("T")[0];
+        if (!this.perfectDays.includes(dateStr)) {
+          if (currentDate.getTime() === today.getTime() && this.getTodayCompletionRate === 100) {
+            streak++;
+          } else {
+            break;
+          }
+        } else {
+          streak++;
+        }
         currentDate.setDate(currentDate.getDate() - 1);
+        const prevDateStr = currentDate.toISOString().split("T")[0];
+        if (!this.perfectDays.includes(prevDateStr) && currentDate.getTime() !== today.getTime()) {
+          break;
+        }
       }
       return streak;
     }
   },
+  watch: {
+    getTodayCompletionRate: {
+      handler(newRate) {
+        if (newRate === 100) {
+          const today = /* @__PURE__ */ new Date();
+          const todayStr = today.toISOString().split("T")[0];
+          if (!this.perfectDays.includes(todayStr)) {
+            this.perfectDays.push(todayStr);
+            common_vendor.index.setStorageSync("perfectDays", this.perfectDays);
+            common_vendor.index.showToast({
+              title: "赞！今日已完成所有任务🎉",
+              icon: "none",
+              duration: 2e3
+            });
+          }
+        }
+      },
+      immediate: true
+    }
+  },
   methods: {
-    // 获取当前时间段的建议
-    getTimeBasedSuggestions() {
-      const hour = (/* @__PURE__ */ new Date()).getHours();
-      if (hour >= 22 || hour < 6) {
-        this.aiMessage.content = "现在应该休息了，建议尽快睡觉！";
-        this.aiMessage.suggestions = [
-          "立即放下手机，准备睡觉。",
-          "做几个简单的伸展运动。",
-          "冥想5分钟帮助放松。"
-        ];
-      } else if (hour >= 20) {
-        this.aiMessage.content = "检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！";
+    async handleAiMessageClick() {
+      if (this.habits.length === 0) {
+        if (this.currentMessageIndex < this.default_message_list.length - 1) {
+          this.currentMessageIndex++;
+          const message = this.default_message_list[this.currentMessageIndex];
+          this.aiMessage = {
+            emoji: message.emoji,
+            content: message.content.replace("{nickname}", this.nickname)
+          };
+        }
+      } else {
+        try {
+          const res = await utils_api.apiService.getAISuggestion();
+          if (res.status === "success" && res.data) {
+            this.aiMessage = {
+              emoji: res.data.emoji || this.default_message_list[0].emoji,
+              content: res.data.suggestion || this.default_message_list[0].content
+            };
+          }
+        } catch (error) {
+          common_vendor.index.__f__("error", "at pages/index/index.vue:375", "获取 AI 建议失败:", error);
+        }
       }
-    },
-    handleAiMessageClick() {
-      common_vendor.index.__f__("log", "at pages/index/index.vue:289", "AI Message Clicked");
-      this.showConvCard = true;
     },
     addHabit() {
       common_vendor.index.navigateTo({
         url: "/pages/add-habit/add-habit"
       });
     },
+    loadUserInfo() {
+      try {
+        const userInfo = common_vendor.index.getStorageSync("userInfo");
+        if (userInfo) {
+          this.nickname = userInfo.nickName || "朋友";
+        } else {
+          this.nickname = "朋友";
+        }
+      } catch (error) {
+        common_vendor.index.__f__("error", "at pages/index/index.vue:395", "获取用户信息失败:", error);
+        this.nickname = "朋友";
+      }
+    },
     loadHabits() {
       const habits = common_vendor.index.getStorageSync("habits") || [];
       this.habits = habits.map((habit) => ({
         ...habit,
-        icon: habit.icon || this.getCategoryIcon(habit.category),
-        color: habit.color || "$theme-color"
+        icon: habit.icon || "✨",
+        color: habit.color || "#fff"
       }));
+      common_vendor.index.__f__("log", "at pages/index/index.vue:407", "get habits from storage", habits);
+      this.perfectDays = common_vendor.index.getStorageSync("perfectDays") || [];
+      common_vendor.index.__f__("log", "at pages/index/index.vue:410", "get perfectDays from storage", this.perfectDays);
     },
     // 周视图相关方法
     isCompletedForDay(habit, dayIndex) {
-      const timestamp = this.getDayTimestamp(dayIndex);
-      return habit.completed.includes(timestamp);
+      const targetDate = this.getDateFromDayIndex(dayIndex);
+      const targetYear = targetDate.getFullYear();
+      const targetMonth = targetDate.getMonth();
+      const targetDay = targetDate.getDate();
+      return habit.completed.some((dateStr) => {
+        const completedDate = new Date(dateStr);
+        return completedDate.getFullYear() === targetYear && completedDate.getMonth() === targetMonth && completedDate.getDate() === targetDay;
+      });
     },
     isWeekToday(dayIndex) {
       const today = /* @__PURE__ */ new Date();
@@ -142,10 +237,11 @@ const _sfc_main = common_vendor.defineComponent({
     },
     getDayTimestamp(dayIndex) {
       const date = this.getDateFromDayIndex(dayIndex);
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+      date.setHours(0, 0, 0, 0);
+      return date.toISOString();
     },
-    toggleHabitComplete(habit, dayIndex) {
-      const timestamp = this.getDayTimestamp(dayIndex);
+    async toggleHabitComplete(habit, dayIndex) {
+      this.getDayTimestamp(dayIndex);
       const today = /* @__PURE__ */ new Date();
       const targetDate = this.getDateFromDayIndex(dayIndex);
       if (targetDate > today) {
@@ -164,54 +260,65 @@ const _sfc_main = common_vendor.defineComponent({
         });
         return;
       }
-      const habits = common_vendor.index.getStorageSync("habits") || [];
-      const habitIndex = habits.findIndex((h) => h.id === habit.id);
-      if (habitIndex === -1)
-        return;
-      const completedIndex = habits[habitIndex].completed.indexOf(timestamp);
-      if (completedIndex === -1) {
-        habits[habitIndex].completed.push(timestamp);
-        const weekStart = this.getDateFromDayIndex(0);
-        const weekEnd = this.getDateFromDayIndex(6);
-        weekStart.setHours(0, 0, 0, 0);
-        weekEnd.setHours(23, 59, 59, 999);
-        const weekCompletedCount = habits[habitIndex].completed.filter((time) => {
-          const date = new Date(time);
-          return date >= weekStart && date <= weekEnd;
-        }).length;
-        this.showRewardCard = true;
-        this.rewardTitle = "打卡成功！";
-        this.rewardMessage = "";
-        this.currentHabit = {
-          id: habit.id,
-          name: habit.title,
-          icon: habit.icon,
-          color: habit.color
-        };
-        this.rewardStats = {
-          count: weekCompletedCount,
-          label: "本周已完成"
-        };
-      } else {
-        habits[habitIndex].completed.splice(completedIndex, 1);
+      try {
+        const res = await utils_api.apiService.recordHabit(habit.habit_id);
+        if (res.status === "success") {
+          const habits = common_vendor.index.getStorageSync("habits") || [];
+          const habitIndex = habits.findIndex((h) => h.habit_id === habit.habit_id);
+          if (habitIndex !== -1) {
+            habits[habitIndex].completed = res.data.completed.map(
+              (timeStr) => new Date(timeStr).getTime()
+            );
+            common_vendor.index.__f__("log", "at pages/index/index.vue:503", habits[habitIndex]);
+            habits[habitIndex].streak = res.data.streak;
+            common_vendor.index.setStorageSync("habits", habits);
+          }
+          this.showRewardCard = true;
+          this.rewardTitle = "打卡成功！";
+          this.rewardMessage = "";
+          this.currentHabit = {
+            id: habit.habit_id,
+            name: habit.title,
+            icon: habit.icon,
+            color: habit.color
+          };
+          const weekStart = this.getDateFromDayIndex(0);
+          const weekEnd = this.getDateFromDayIndex(6);
+          weekStart.setHours(0, 0, 0, 0);
+          weekEnd.setHours(23, 59, 59, 999);
+          const weekCompletedCount = habit.completed.filter((time) => {
+            const date = new Date(time);
+            return date >= weekStart && date <= weekEnd;
+          }).length;
+          this.rewardStats = {
+            count: weekCompletedCount,
+            label: "本周已完成"
+          };
+          this.loadHabits();
+          common_vendor.index.vibrateShort();
+        } else {
+          throw new Error(res.message || "打卡失败");
+        }
+      } catch (error) {
+        common_vendor.index.showToast({
+          title: error.message || "打卡失败",
+          icon: "none"
+        });
       }
-      common_vendor.index.setStorageSync("habits", habits);
-      this.loadHabits();
-      common_vendor.index.vibrateShort();
     },
     // 检查本周是否全部完成
     checkWeekCompletion(habit) {
       return Array(7).fill().every((_, index) => this.isCompletedForDay(habit, index));
     },
     // 通用方法
-    updateHabitCompletion(habit, timestamp) {
+    updateHabitCompletion(habit, dateStr) {
       const habits = common_vendor.index.getStorageSync("habits") || [];
-      const habitIndex = habits.findIndex((h) => h.id === habit.id);
+      const habitIndex = habits.findIndex((h) => h.habit_id === habit.habit_id);
       if (habitIndex === -1)
         return;
-      const completedIndex = habits[habitIndex].completed.indexOf(timestamp);
+      const completedIndex = habits[habitIndex].completed.indexOf(dateStr);
       if (completedIndex === -1) {
-        habits[habitIndex].completed.push(timestamp);
+        habits[habitIndex].completed.push(dateStr);
       } else {
         habits[habitIndex].completed.splice(completedIndex, 1);
       }
@@ -221,7 +328,7 @@ const _sfc_main = common_vendor.defineComponent({
     },
     goToStats(habit) {
       common_vendor.index.navigateTo({
-        url: `/pages/habit-stats/habit-stats?id=${habit.id}&title=${encodeURIComponent(habit.title)}`
+        url: `/pages/habit-stats/habit-stats?habit_id=${habit.habit_id}&title=${encodeURIComponent(habit.title)}`
       });
     },
     getCategoryIcon(category) {
@@ -320,30 +427,42 @@ const _sfc_main = common_vendor.defineComponent({
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("log", "at pages/index/index.vue:538", "ActionSheet 关闭", err);
+          common_vendor.index.__f__("log", "at pages/index/index.vue:674", "ActionSheet 关闭", err);
         }
       });
     },
     editHabit(habit) {
       common_vendor.index.navigateTo({
-        url: `/pages/add-habit/add-habit?id=${habit.id}`
+        url: `/pages/add-habit/add-habit?habit_id=${habit.habit_id}`
       });
     },
-    deleteHabit(habit) {
+    async deleteHabit(habit) {
       common_vendor.index.showModal({
         title: "确认删除",
         content: "确定要删除这个习惯吗？此操作不可恢复。",
         confirmColor: "#FF3B30",
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            const habits = common_vendor.index.getStorageSync("habits") || [];
-            const updatedHabits = habits.filter((h) => h.id !== habit.id);
-            common_vendor.index.setStorageSync("habits", updatedHabits);
-            this.loadHabits();
-            common_vendor.index.showToast({
-              title: "删除成功",
-              icon: "success"
-            });
+            try {
+              const res2 = await utils_api.apiService.deleteHabit(habit.habit_id);
+              if (res2.status === "success") {
+                const habits = common_vendor.index.getStorageSync("habits") || [];
+                const updatedHabits = habits.filter((h) => h.habit_id !== habit.habit_id);
+                common_vendor.index.setStorageSync("habits", updatedHabits);
+                this.loadHabits();
+                common_vendor.index.showToast({
+                  title: "删除成功",
+                  icon: "success"
+                });
+              } else {
+                throw new Error(res2.message || "删除失败");
+              }
+            } catch (error) {
+              common_vendor.index.showToast({
+                title: error.message || "删除失败",
+                icon: "none"
+              });
+            }
           }
         }
       });
@@ -384,7 +503,7 @@ const _sfc_main = common_vendor.defineComponent({
     handleSaveNote({ timestamp, content }) {
       const noteTimestamp = Date.now();
       const habits = common_vendor.index.getStorageSync("habits") || [];
-      const habitIndex = habits.findIndex((h) => h.id === this.currentHabit.id);
+      const habitIndex = habits.findIndex((h) => h.habit_id === this.currenthabit.habit_id);
       habits[habitIndex].notes.push({
         timestamp: noteTimestamp,
         content
@@ -411,10 +530,10 @@ const _sfc_main = common_vendor.defineComponent({
       this.toggleHabitComplete(habit, dayIndex);
     },
     handleCardLongPress(habit) {
-      this.flippedCards[habit.id] = true;
+      this.flippedCards[habit.habit_id] = true;
     },
     handleCardTouchEnd(habit) {
-      this.flippedCards[habit.id] = false;
+      this.flippedCards[habit.habit_id] = false;
     },
     handleTouchStart(event) {
       if (this.isOrderMode)
@@ -454,7 +573,7 @@ const _sfc_main = common_vendor.defineComponent({
           this.translateX = 0;
         }, 50);
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:690", "获取窗口信息失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:841", "获取窗口信息失败:", error);
         this.viewMode = mode;
         this.translateX = 0;
       }
@@ -462,10 +581,6 @@ const _sfc_main = common_vendor.defineComponent({
     getDaysInMonth() {
       const date = new Date(this.currentYear, this.currentMonth - 1, 1);
       return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    },
-    isCompletedForMonthDay(habit, day) {
-      const timestamp = new Date(this.currentYear, this.currentMonth - 1, day).getTime();
-      return habit.completed.includes(timestamp);
     },
     isMonthToday(day) {
       const today = /* @__PURE__ */ new Date();
@@ -475,58 +590,6 @@ const _sfc_main = common_vendor.defineComponent({
       const today = /* @__PURE__ */ new Date();
       const targetDate = new Date(this.currentYear, this.currentMonth - 1, day);
       return targetDate > today;
-    },
-    handleMonthDayClick(habit, day) {
-      const timestamp = new Date(this.currentYear, this.currentMonth - 1, day).getTime();
-      const today = /* @__PURE__ */ new Date();
-      const targetDate = new Date(this.currentYear, this.currentMonth - 1, day);
-      if (targetDate > today) {
-        common_vendor.index.showToast({
-          title: "未来还未来哦~",
-          icon: "none",
-          duration: 1e3
-        });
-        return;
-      }
-      if (targetDate.getDate() !== today.getDate() || targetDate.getMonth() !== today.getMonth() || targetDate.getFullYear() !== today.getFullYear()) {
-        common_vendor.index.showToast({
-          title: "请点击习惯卡，在日历中进行补打卡",
-          icon: "none",
-          duration: 1e3
-        });
-        return;
-      }
-      const habits = common_vendor.index.getStorageSync("habits") || [];
-      const habitIndex = habits.findIndex((h) => h.id === habit.id);
-      if (habitIndex === -1)
-        return;
-      const completedIndex = habits[habitIndex].completed.indexOf(timestamp);
-      if (completedIndex === -1) {
-        habits[habitIndex].completed.push(timestamp);
-        const monthStart = new Date(this.currentYear, this.currentMonth - 1, 1);
-        const monthEnd = new Date(this.currentYear, this.currentMonth, 0);
-        const monthCompletedCount = habits[habitIndex].completed.filter((time) => {
-          const date = new Date(time);
-          return date >= monthStart && date <= monthEnd;
-        }).length;
-        this.showRewardCard = true;
-        this.rewardTitle = "打卡成功！";
-        this.rewardMessage = "";
-        this.currentHabit = {
-          id: habit.id,
-          name: habit.title,
-          icon: habit.icon,
-          color: habit.color
-        };
-        this.rewardStats = {
-          count: monthCompletedCount
-        };
-      } else {
-        habits[habitIndex].completed.splice(completedIndex, 1);
-      }
-      common_vendor.index.setStorageSync("habits", habits);
-      this.loadHabits();
-      common_vendor.index.vibrateShort();
     },
     getMonthCompletionCount(habit) {
       const monthStart = new Date(this.currentYear, this.currentMonth - 1, 1);
@@ -746,7 +809,7 @@ const _sfc_main = common_vendor.defineComponent({
               });
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1037", "Share file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:1124", "Share file error:", err);
               common_vendor.index.showToast({
                 title: "导出失败",
                 icon: "none"
@@ -754,14 +817,14 @@ const _sfc_main = common_vendor.defineComponent({
             }
           });
         } catch (err) {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1045", "File operation error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:1132", "File operation error:", err);
           common_vendor.index.showToast({
             title: "导出失败",
             icon: "none"
           });
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1052", "Export error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1139", "Export error:", error);
         common_vendor.index.showToast({
           title: "导出失败",
           icon: "none"
@@ -806,7 +869,7 @@ const _sfc_main = common_vendor.defineComponent({
           }
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1099", "Import error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1186", "Import error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -816,9 +879,9 @@ const _sfc_main = common_vendor.defineComponent({
     mergeImportData(importedHabits) {
       try {
         const currentHabits = common_vendor.index.getStorageSync("habits") || [];
-        const habitMap = new Map(currentHabits.map((habit) => [habit.id, habit]));
+        const habitMap = new Map(currentHabits.map((habit) => [habit.habit_id, habit]));
         importedHabits.forEach((importedHabit) => {
-          const existingHabit = habitMap.get(importedHabit.id);
+          const existingHabit = habitMap.get(importedhabit.habit_id);
           if (existingHabit) {
             const completedSet = /* @__PURE__ */ new Set([...existingHabit.completed, ...importedHabit.completed]);
             existingHabit.completed = Array.from(completedSet);
@@ -835,7 +898,7 @@ const _sfc_main = common_vendor.defineComponent({
             existingHabit.color = importedHabit.color;
             existingHabit.flag = importedHabit.flag;
           } else {
-            habitMap.set(importedHabit.id, importedHabit);
+            habitMap.set(importedhabit.habit_id, importedHabit);
           }
         });
         const mergedHabits = Array.from(habitMap.values());
@@ -846,7 +909,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1145", "Merge error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1232", "Merge error:", error);
         common_vendor.index.showToast({
           title: "合并失败",
           icon: "none"
@@ -862,7 +925,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1162", "Overwrite error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1249", "Overwrite error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -912,7 +975,7 @@ const _sfc_main = common_vendor.defineComponent({
                 }
                 this.performImport(importData);
               } catch (parseError) {
-                common_vendor.index.__f__("error", "at pages/index/index.vue:1214", "Parse error:", parseError);
+                common_vendor.index.__f__("error", "at pages/index/index.vue:1301", "Parse error:", parseError);
                 common_vendor.index.showToast({
                   title: "文件格式错误",
                   icon: "none"
@@ -920,7 +983,7 @@ const _sfc_main = common_vendor.defineComponent({
               }
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1222", "Read file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:1309", "Read file error:", err);
               common_vendor.index.showToast({
                 title: "读取文件失败",
                 icon: "none"
@@ -929,7 +992,7 @@ const _sfc_main = common_vendor.defineComponent({
           });
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1231", "Choose file error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:1318", "Choose file error:", err);
           const systemInfo = common_vendor.index.getSystemInfoSync();
           const isIOS = systemInfo.platform === "ios";
           if (isIOS) {
@@ -949,22 +1012,29 @@ const _sfc_main = common_vendor.defineComponent({
       });
     }
   },
-  onShow() {
+  async onShow() {
+    this.loadUserInfo();
     this.loadHabits();
     this.updateDateInfo();
     this.startClock();
-    const hasShownReminder = common_vendor.index.getStorageSync("has_shown_data_loss_reminder");
-    if (!hasShownReminder) {
-      common_vendor.index.showModal({
-        title: "数据安全提醒",
-        content: '请注意：在微信设置中选择"清理小程序缓存"会导致所有数据被删除。建议定期使用导出功能备份您的数据，以防数据丢失。',
-        confirmText: "我知道了",
-        success: (res) => {
-          if (res.confirm) {
-            common_vendor.index.setStorageSync("has_shown_data_loss_reminder", true);
-          }
+    if (this.habits.length === 0) {
+      const initialMessage = this.default_message_list[0];
+      this.aiMessage = {
+        emoji: initialMessage.emoji,
+        content: initialMessage.content.replace("{nickname}", this.nickname)
+      };
+    } else {
+      try {
+        const res = await utils_api.apiService.getAISuggestion();
+        if (res.status === "success" && res.data) {
+          this.aiMessage = {
+            emoji: res.data.emoji || this.default_message_list[0].emoji,
+            content: res.data.suggestion || this.default_message_list[0].content
+          };
         }
-      });
+      } catch (error) {
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1366", "获取 AI 建议失败:", error);
+      }
     }
   },
   onHide() {
@@ -984,17 +1054,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     a: _ctx.showConvCard
   }, _ctx.showConvCard ? {
     b: common_vendor.o(($event) => _ctx.showConvCard = $event),
-    c: common_vendor.p({
+    c: common_vendor.o(($event) => _ctx.aiMessage.emoji = $event),
+    d: common_vendor.o(($event) => _ctx.aiMessage.content = $event),
+    e: common_vendor.p({
       show: _ctx.showConvCard,
       emoji: _ctx.aiMessage.emoji,
-      suggestions: _ctx.aiMessage.suggestions
+      content: _ctx.aiMessage.content
     })
   } : {}, {
-    d: _ctx.showRewardCard
+    f: _ctx.showRewardCard
   }, _ctx.showRewardCard ? {
-    e: common_vendor.o(_ctx.handleSaveNote),
-    f: common_vendor.o(($event) => _ctx.showRewardCard = $event),
-    g: common_vendor.p({
+    g: common_vendor.o(_ctx.handleSaveNote),
+    h: common_vendor.o(($event) => _ctx.showRewardCard = $event),
+    i: common_vendor.p({
       title: _ctx.rewardTitle,
       message: _ctx.rewardMessage,
       stats: _ctx.rewardStats,
@@ -1003,11 +1075,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       show: _ctx.showRewardCard
     })
   } : {}, {
-    h: common_vendor.t(_ctx.currentYear),
-    i: common_vendor.t(_ctx.currentMonth),
-    j: common_vendor.t(_ctx.monthWeek),
-    k: common_vendor.t(_ctx.currentStreak),
-    l: `${_ctx.getTodayCompletedCount / _ctx.habits.length * 100}%`,
+    j: common_vendor.t(_ctx.currentStreak),
+    k: `${_ctx.getTodayCompletionRate}%`,
+    l: _ctx.getTodayCompletionRate === 100 ? 1 : "",
     m: _ctx.isOrderMode
   }, _ctx.isOrderMode ? {
     n: common_vendor.o((...args) => _ctx.completeOrder && _ctx.completeOrder(...args))
@@ -1015,19 +1085,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     o: common_vendor.t(_ctx.aiMessage.emoji),
     p: common_vendor.t(_ctx.aiMessage.content),
     q: common_vendor.o((...args) => _ctx.handleAiMessageClick && _ctx.handleAiMessageClick(...args)),
-    r: _ctx.habits.length === 0
-  }, _ctx.habits.length === 0 ? {} : {}, {
-    s: common_vendor.f(_ctx.habits, (habit, index, i0) => {
+    r: common_vendor.f(_ctx.habits, (habit, index, i0) => {
       return common_vendor.e({
         a: common_vendor.t(habit.icon),
         b: habit.color,
         c: common_vendor.t(habit.title),
-        d: common_vendor.o(($event) => _ctx.showActionSheet(habit), habit.id)
+        d: common_vendor.o(($event) => _ctx.showActionSheet(habit), habit.habit_id)
       }, _ctx.isOrderMode ? {
         e: index === 0 ? 1 : "",
-        f: common_vendor.o(($event) => _ctx.moveHabitUp(index), habit.id),
+        f: common_vendor.o(($event) => _ctx.moveHabitUp(index), habit.habit_id),
         g: index === _ctx.habits.length - 1 ? 1 : "",
-        h: common_vendor.o(($event) => _ctx.moveHabitDown(index), habit.id)
+        h: common_vendor.o(($event) => _ctx.moveHabitDown(index), habit.habit_id)
       } : {}, {
         i: common_vendor.f(7, (day, i, i1) => {
           return {
@@ -1040,9 +1108,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
             g: i
           };
         }),
-        j: common_vendor.t(_ctx.expandedCards[habit.id] ? "收起日志" : "查看培育日志"),
-        k: common_vendor.t(_ctx.expandedCards[habit.id] ? "↑" : "↓"),
-        l: common_vendor.o(($event) => _ctx.toggleCardExpand(habit.id), habit.id),
+        j: common_vendor.t(_ctx.expandedCards[habit.habit_id] ? "收起日志" : "查看培育日志"),
+        k: common_vendor.t(_ctx.expandedCards[habit.habit_id] ? "↑" : "↓"),
+        l: common_vendor.o(($event) => _ctx.toggleCardExpand(habit.habit_id), habit.habit_id),
         m: _ctx.getWeekNotes(habit).length === 0
       }, _ctx.getWeekNotes(habit).length === 0 ? {} : {
         n: common_vendor.f(_ctx.getWeekNotes(habit), (note, index2, i1) => {
@@ -1055,29 +1123,29 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
           };
         })
       }, {
-        o: _ctx.expandedCards[habit.id],
+        o: _ctx.expandedCards[habit.habit_id],
         p: habit.flag
       }, habit.flag ? {
         q: common_vendor.t(habit.flag)
       } : {}, {
         r: common_vendor.t(_ctx.formatCreateTime(habit.createTime)),
-        s: habit.id,
-        t: _ctx.flippedCards[habit.id] ? 1 : "",
+        s: habit.habit_id,
+        t: _ctx.flippedCards[habit.habit_id] ? 1 : "",
         v: habit.animating,
         w: habit.animating ? 1 : "",
-        x: common_vendor.o(($event) => !_ctx.isOrderMode && _ctx.handleCardLongPress(habit), habit.id),
-        y: common_vendor.o(($event) => !_ctx.isOrderMode && _ctx.handleCardTouchEnd(habit), habit.id)
+        x: common_vendor.o(($event) => !_ctx.isOrderMode && _ctx.handleCardLongPress(habit), habit.habit_id),
+        y: common_vendor.o(($event) => !_ctx.isOrderMode && _ctx.handleCardTouchEnd(habit), habit.habit_id)
       });
     }),
-    t: _ctx.isOrderMode,
+    s: _ctx.isOrderMode,
+    t: _ctx.isOrderMode ? 1 : "",
     v: _ctx.isOrderMode ? 1 : "",
-    w: _ctx.isOrderMode ? 1 : "",
-    x: `translateX(${_ctx.translateX}px)`,
-    y: common_vendor.o((...args) => _ctx.handleTouchStart && _ctx.handleTouchStart(...args)),
-    z: common_vendor.o((...args) => _ctx.handleTouchEnd && _ctx.handleTouchEnd(...args)),
-    A: !_ctx.isOrderMode
+    w: `translateX(${_ctx.translateX}px)`,
+    x: common_vendor.o((...args) => _ctx.handleTouchStart && _ctx.handleTouchStart(...args)),
+    y: common_vendor.o((...args) => _ctx.handleTouchEnd && _ctx.handleTouchEnd(...args)),
+    z: !_ctx.isOrderMode
   }, !_ctx.isOrderMode ? {
-    B: common_vendor.o((...args) => _ctx.addHabit && _ctx.addHabit(...args))
+    A: common_vendor.o((...args) => _ctx.addHabit && _ctx.addHabit(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

@@ -47,6 +47,10 @@
   align-items: center;
   justify-content: space-between;
   min-height: 100rpx;
+  cursor: pointer; /* 添加手型光标 */
+}
+.setting-item:active {
+  opacity: 0.8; /* 添加点击反馈效果 */
 }
 .setting-left {
   display: flex;

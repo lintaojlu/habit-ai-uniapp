@@ -7,13 +7,13 @@ const _sfc_main = {
       type: Boolean,
       default: false
     },
-    suggestions: {
-      type: Array,
-      default: () => []
-    },
     emoji: {
       type: String,
-      default: "👩🏻‍"
+      default: "🤖"
+    },
+    content: {
+      type: String,
+      default: ""
     }
   },
   data() {
@@ -72,11 +72,9 @@ const _sfc_main = {
     closeCard() {
       this.isClosingDown = true;
       setTimeout(() => {
-        this.$emit("update:show", false);
+        this.$emit("updateShow", false);
         this.isClosingDown = false;
       }, 500);
-    },
-    handleContainerClick() {
     }
   }
 };
@@ -86,20 +84,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $props.show ? {
     b: common_vendor.t($options.formattedDate),
     c: common_vendor.t($props.emoji),
-    d: common_vendor.f($props.suggestions, (item, index, i0) => {
-      return {
-        a: common_vendor.t(index + 1),
-        b: common_vendor.t(item),
-        c: index
-      };
-    }),
+    d: common_vendor.t($props.content),
     e: common_vendor.n($props.show && "slide-in"),
     f: common_vendor.n($data.isClosingDown && "slide-out-down"),
     g: common_vendor.n($data.isDragging && "dragging"),
     h: common_vendor.s($options.dragStyle),
     i: common_vendor.o(() => {
     }),
-    j: common_vendor.o((...args) => $options.handleContainerClick && $options.handleContainerClick(...args)),
+    j: common_vendor.o((...args) => _ctx.handleContainerClick && _ctx.handleContainerClick(...args)),
     k: common_vendor.o((...args) => $options.handleTouchStart && $options.handleTouchStart(...args)),
     l: common_vendor.o((...args) => $options.handleTouchMove && $options.handleTouchMove(...args)),
     m: common_vendor.o((...args) => $options.handleTouchEnd && $options.handleTouchEnd(...args))

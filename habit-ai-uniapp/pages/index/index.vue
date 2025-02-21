@@ -4,8 +4,8 @@
     <conv-card
         v-if="showConvCard"
         :show="showConvCard"
-        :emoji="aiMessage.emoji"
-        :suggestions="aiMessage.suggestions"
+        v-model:emoji="aiMessage.emoji"
+        v-model:content="aiMessage.content"
         @updateShow="showConvCard = $event"
     />
     <reward-card
@@ -21,11 +21,12 @@
     />
     <view class="header">
       <view class="date-info">
-        <view class="date-content">
+        <!-- <view class="date-content">
           <text class="year">{{ currentYear }}年{{ currentMonth }}月第{{ monthWeek }}周</text>
-        </view>
+        </view> -->
         <view class="flip-clock">
           <text class="streak-icon">🔥</text>
+          <text class="streak-label">连胜</text>
           <text class="time-unit">{{ currentStreak }}</text>
           <text class="streak-label">天</text>
         </view>
@@ -33,7 +34,11 @@
       <view class="header-row">
         <view class="habit-stats">
           <view class="progress-bar">
-            <view class="progress-fill" :style="{ width: `${(getTodayCompletedCount / habits.length) * 100}%` }"></view>
+            <view 
+              class="progress-fill" 
+              :style="{ width: `${getTodayCompletionRate}%` }"
+              :class="{ 'perfect': getTodayCompletionRate === 100 }">
+            </view>          
           </view>
         </view>
         <view v-if="isOrderMode" class="complete-order-btn" @tap="completeOrder">完成排序</view>
@@ -46,12 +51,6 @@
       </view>
     </view>
 
-    <view class="empty-state" v-if="habits.length === 0">
-      <text class="empty-icon">📝</text>
-      <text class="empty-title">开始培养新习惯</text>
-      <text class="empty-desc">点击右下角的加号按钮添加你想要培养的习惯</text>
-    </view>
-
     <view class="view-container" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
       <view
           class="view-page habits-list"
@@ -59,10 +58,10 @@
       >
         <view
             v-for="(habit, index) in habits"
-            :key="habit.id"
+            :key="habit.habit_id"
             class="habit-card"
             :class="{
-            'is-flipped': flippedCards[habit.id],
+            'is-flipped': flippedCards[habit.habit_id],
             'is-order-mode': isOrderMode,
             'no-interaction': isOrderMode,
             [habit.animating]: habit.animating
@@ -123,14 +122,14 @@
                   </view>
                 </view>
               </view>
-              <view class="expand-button" @tap.stop="toggleCardExpand(habit.id)">
-                <text class="expand-text">{{ expandedCards[habit.id] ? '收起日志' : '查看培育日志' }}</text>
-                <text class="expand-icon">{{ expandedCards[habit.id] ? '↑' : '↓' }}</text>
+              <view class="expand-button" @tap.stop="toggleCardExpand(habit.habit_id)">
+                <text class="expand-text">{{ expandedCards[habit.habit_id] ? '收起日志' : '查看培育日志' }}</text>
+                <text class="expand-icon">{{ expandedCards[habit.habit_id] ? '↑' : '↓' }}</text>
               </view>
             </view>
 
             <!-- 笔记容器 -->
-            <view class="notes-container" v-show="expandedCards[habit.id]">
+            <view class="notes-container" v-show="expandedCards[habit.habit_id]">
               <view class="empty-notes" v-if="getWeekNotes(habit).length === 0">
                 <text>本周还没有记录历程哦~</text>
               </view>
@@ -183,6 +182,7 @@
 import {defineComponent} from 'vue'
 import RewardCard from '@/components/reward-card.vue'
 import ConvCard from "@/components/conv-card.vue";
+import {apiService} from "@/utils/api.js";
 
 export default defineComponent({
   components: {
@@ -191,6 +191,7 @@ export default defineComponent({
   },
   data() {
     return {
+      nickname: '',
       weekDays: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
       habits: [],
       currentYear: 0,
@@ -215,33 +216,74 @@ export default defineComponent({
       timer: null,
       showConvCard: false,
       aiMessage: {
-        emoji: '👩🏻‍',
-        content: '检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！',
-        suggestions: [
-          '设定固定的睡觉和起床时间，尽量保持规律。',
-          '创造一个舒适的睡眠环境，保持房间安静、黑暗和凉爽。',
-          '避免在晚上使用电子设备，如手机、平板电脑等。',
-          '晚上避免摄入咖啡因和刺激性食物。',
-          '建立一个放松的睡前常规，如泡个热水澡、阅读书籍等。',
-          '白天进行适量的运动，但避免在临近睡觉时间进行剧烈运动。',
-          '避免午睡时间过长，以免影响晚上的睡眠。'
-        ]
-      }
+        emoji: '😆',
+        content: '欢迎来到 Habit AI！点我，一起达成目标！'
+      },
+      perfectDays: [], // 新增：完全打卡日期列表
+      currentMessageIndex: 0,
+      default_message_list: [
+        {
+          emoji: '😳',
+          content: '你好 {nickname} 欢迎来到 Habit AI！点我看看！'
+        },
+        {
+          emoji: '👇🧐',
+          content: '看到下面加号了吗？点击它添加一个习惯/任务！'
+        },
+        {
+          emoji: '💪😙',
+          content: '别忘了告诉我你的目标，让我来监督你！'
+        },
+        {
+          emoji: '😠',
+          content: '说到做到！我会经常来提醒你，不准嫌我烦！'
+        },
+        {
+          emoji: '🥺',
+          content: '进度条会显示当日进展，一定要完成哦！'
+        },
+        {
+          emoji: '😏',
+          content: '完成所有任务你将收获完美一天，让我们看看你能连胜多少天！'
+        },
+        {
+          emoji: '😈',
+          content: '如果有问题可以随时告诉我，我也不是什么坏人呢嘻嘻！'
+        },
+        {
+          emoji: '🫣',
+          content: '开始吧！我肯定不偷看！'
+        },
+        {
+          emoji: '🫨',
+          content: '啊啊啊快开始吧！'
+        }
+      ]
     }
   },
 
   computed: {
     getTodayCompletedCount() {
       const today = new Date()
-      const todayTimestamp = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate()
-      ).getTime()
+      const todayYear = today.getFullYear()
+      const todayMonth = today.getMonth()
+      const todayDate = today.getDate()
+      
       return this.habits.filter(habit =>
-          habit.completed.includes(todayTimestamp)
+        habit.completed.some(dateStr => {
+          const completedDate = new Date(dateStr)
+          return completedDate.getFullYear() === todayYear &&
+                 completedDate.getMonth() === todayMonth &&
+                 completedDate.getDate() === todayDate
+        })
       ).length
     },
+
+    getTodayCompletionRate() {
+      if (this.habits.length === 0) return 0
+      return (this.getTodayCompletedCount / this.habits.length) * 100
+    },
+
     currentStreak() {
       if (!this.habits.length) return 0
 
@@ -251,63 +293,136 @@ export default defineComponent({
       let currentDate = new Date(today)
 
       while (true) {
-        const timestamp = currentDate.getTime()
-        const allHabitsCompleted = this.habits.every(habit =>
-            habit.completed.includes(timestamp)
-        )
+        const dateStr = currentDate.toISOString().split('T')[0]
+        
+        // 如果日期不在完美打卡列表中，检查是否是今天
+        if (!this.perfectDays.includes(dateStr)) {
+          // 如果是今天，且所有习惯都已完成，仍然计入连胜
+          if (currentDate.getTime() === today.getTime() && this.getTodayCompletionRate === 100) {
+            streak++
+          } else {
+            break
+          }
+        } else {
+          streak++
+        }
 
-        if (!allHabitsCompleted) break
-        streak++
+        // 检查前一天
         currentDate.setDate(currentDate.getDate() - 1)
+        
+        // 如果前一天不在列表中，且不是今天，则退出循环
+        const prevDateStr = currentDate.toISOString().split('T')[0]
+        if (!this.perfectDays.includes(prevDateStr) && 
+            currentDate.getTime() !== today.getTime()) {
+          break
+        }
       }
 
       return streak
+    },
+  },
+
+  watch: {
+    getTodayCompletionRate: {
+      handler(newRate) {
+        if (newRate === 100) {
+          const today = new Date()
+          const todayStr = today.toISOString().split('T')[0]
+          
+          // 检查是否已经记录过今天
+          if (!this.perfectDays.includes(todayStr)) {
+            this.perfectDays.push(todayStr)
+            // 保存到本地存储
+            uni.setStorageSync('perfectDays', this.perfectDays)
+            
+            // 显示祝贺消息
+            uni.showToast({
+              title: '赞！今日已完成所有任务🎉',
+              icon: 'none',
+              duration: 2000
+            })
+          }
+        }
+      },
+      immediate: true
     }
   },
 
 
-  methods: {
-    // 获取当前时间段的建议
-    getTimeBasedSuggestions() {
-      const hour = new Date().getHours()
-
-      // 根据不同时间段返回不同的建议
-      if (hour >= 22 || hour < 6) {
-        this.aiMessage.content = '现在应该休息了，建议尽快睡觉！'
-        this.aiMessage.suggestions = [
-          '立即放下手机，准备睡觉。',
-          '做几个简单的伸展运动。',
-          '冥想5分钟帮助放松。'
-        ]
-      } else if (hour >= 20) {
-        this.aiMessage.content = '检测到意志力溢出漏洞！建议晚上 10 点前洗漱保证按时睡觉！'
-        // 使用默认的睡眠建议
+  methods: {    
+    async handleAiMessageClick() {
+      if (this.habits.length === 0) {
+        // 如果没有习惯，显示引导消息
+        if (this.currentMessageIndex < this.default_message_list.length - 1) {
+          this.currentMessageIndex++
+          const message = this.default_message_list[this.currentMessageIndex]
+          this.aiMessage = {
+            emoji: message.emoji,
+            content: message.content.replace('{nickname}', this.nickname)
+          }
+        }
+      } else {
+        // 如果有习惯，调用 API 获取建议
+        try {
+          const res = await apiService.getAISuggestion()
+          if (res.status === 'success' && res.data) {
+            this.aiMessage = {
+              emoji: res.data.emoji || this.default_message_list[0].emoji,
+              content: res.data.suggestion || this.default_message_list[0].content
+            }
+          }
+        } catch (error) {
+          console.error('获取 AI 建议失败:', error)
+        }
       }
-      // 可以添加更多时间段的建议...
     },
-    handleAiMessageClick() {
-      console.log('AI Message Clicked')
-      this.showConvCard = true
-    },
+
     addHabit() {
       uni.navigateTo({
         url: '/pages/add-habit/add-habit'
       })
     },
 
+    loadUserInfo() {
+      try {
+        const userInfo = uni.getStorageSync('userInfo')
+        if (userInfo) {
+          this.nickname = userInfo.nickName || '朋友'
+        } else {
+          this.nickname = '朋友'
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        this.nickname = '朋友'
+      }
+    },
+
     loadHabits() {
       const habits = uni.getStorageSync('habits') || []
       this.habits = habits.map(habit => ({
         ...habit,
-        icon: habit.icon || this.getCategoryIcon(habit.category),
-        color: habit.color || '$theme-color'
+        icon: habit.icon || "✨",
+        color: habit.color || '#fff'
       }))
+      console.log("get habits from storage", habits)
+      // 加载完全打卡日期列表
+      this.perfectDays = uni.getStorageSync('perfectDays') || []
+      console.log("get perfectDays from storage", this.perfectDays)
     },
 
     // 周视图相关方法
     isCompletedForDay(habit, dayIndex) {
-      const timestamp = this.getDayTimestamp(dayIndex)
-      return habit.completed.includes(timestamp)
+      const targetDate = this.getDateFromDayIndex(dayIndex)
+      const targetYear = targetDate.getFullYear()
+      const targetMonth = targetDate.getMonth()
+      const targetDay = targetDate.getDate()
+      
+      return habit.completed.some(dateStr => {
+        const completedDate = new Date(dateStr)
+        return completedDate.getFullYear() === targetYear &&
+               completedDate.getMonth() === targetMonth &&
+               completedDate.getDate() === targetDay
+      })
     },
 
     isWeekToday(dayIndex) {
@@ -340,10 +455,11 @@ export default defineComponent({
 
     getDayTimestamp(dayIndex) {
       const date = this.getDateFromDayIndex(dayIndex)
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+      date.setHours(0, 0, 0, 0)
+      return date.toISOString()
     },
 
-    toggleHabitComplete(habit, dayIndex) {
+    async toggleHabitComplete(habit, dayIndex) {
       const timestamp = this.getDayTimestamp(dayIndex)
       const today = new Date()
       const targetDate = this.getDateFromDayIndex(dayIndex)
@@ -357,8 +473,7 @@ export default defineComponent({
         return
       }
 
-      if (
-          targetDate.getDate() !== today.getDate() ||
+      if (targetDate.getDate() !== today.getDate() ||
           targetDate.getMonth() !== today.getMonth() ||
           targetDate.getFullYear() !== today.getFullYear()
       ) {
@@ -370,43 +485,64 @@ export default defineComponent({
         return
       }
 
-      const habits = uni.getStorageSync('habits') || []
-      const habitIndex = habits.findIndex(h => h.id === habit.id)
-      if (habitIndex === -1) return
+      try {
+        // 调用打卡 API
+        const res = await apiService.recordHabit(habit.habit_id)
 
-      const completedIndex = habits[habitIndex].completed.indexOf(timestamp)
-      if (completedIndex === -1) {
-        habits[habitIndex].completed.push(timestamp)
-        const weekStart = this.getDateFromDayIndex(0)
-        const weekEnd = this.getDateFromDayIndex(6)
-        weekStart.setHours(0, 0, 0, 0)
-        weekEnd.setHours(23, 59, 59, 999)
+        if (res.status === 'success') {
+          // 更新本地存储中对应习惯的打卡记录
+          const habits = uni.getStorageSync('habits') || []
+          const habitIndex = habits.findIndex(h => h.habit_id === habit.habit_id)
+          if (habitIndex !== -1) {
+            // 将 ISO 时间字符串转换为时间戳
+            habits[habitIndex].completed = res.data.completed.map(timeStr =>
+                new Date(timeStr).getTime()
+            )
 
-        const weekCompletedCount = habits[habitIndex].completed.filter(time => {
-          const date = new Date(time)
-          return date >= weekStart && date <= weekEnd
-        }).length
+            // 更新 streak
+            console.log(habits[habitIndex])
+            habits[habitIndex].streak = res.data.streak
+            uni.setStorageSync('habits', habits)
+          }
 
-        this.showRewardCard = true
-        this.rewardTitle = '打卡成功！'
-        this.rewardMessage = ''
-        this.currentHabit = {
-          id: habit.id,
-          name: habit.title,
-          icon: habit.icon,
-          color: habit.color
+          // 显示打卡成功卡片
+          this.showRewardCard = true
+          this.rewardTitle = '打卡成功！'
+          this.rewardMessage = ''
+          this.currentHabit = {
+            id: habit.habit_id,
+            name: habit.title,
+            icon: habit.icon,
+            color: habit.color
+          }
+
+          // 计算本周完成次数
+          const weekStart = this.getDateFromDayIndex(0)
+          const weekEnd = this.getDateFromDayIndex(6)
+          weekStart.setHours(0, 0, 0, 0)
+          weekEnd.setHours(23, 59, 59, 999)
+
+          const weekCompletedCount = habit.completed.filter(time => {
+            const date = new Date(time)
+            return date >= weekStart && date <= weekEnd
+          }).length
+
+          this.rewardStats = {
+            count: weekCompletedCount,
+            label: '本周已完成'
+          }
+
+          this.loadHabits()
+          uni.vibrateShort()
+        } else {
+          throw new Error(res.message || '打卡失败')
         }
-        this.rewardStats = {
-          count: weekCompletedCount,
-          label: '本周已完成'
-        }
-      } else {
-        habits[habitIndex].completed.splice(completedIndex, 1)
+      } catch (error) {
+        uni.showToast({
+          title: error.message || '打卡失败',
+          icon: 'none'
+        })
       }
-
-      uni.setStorageSync('habits', habits)
-      this.loadHabits()
-      uni.vibrateShort()
     },
 
     // 检查本周是否全部完成
@@ -415,14 +551,14 @@ export default defineComponent({
     },
 
     // 通用方法
-    updateHabitCompletion(habit, timestamp) {
+    updateHabitCompletion(habit, dateStr) {
       const habits = uni.getStorageSync('habits') || []
-      const habitIndex = habits.findIndex(h => h.id === habit.id)
+      const habitIndex = habits.findIndex(h => h.habit_id === habit.habit_id)
       if (habitIndex === -1) return
 
-      const completedIndex = habits[habitIndex].completed.indexOf(timestamp)
+      const completedIndex = habits[habitIndex].completed.indexOf(dateStr)
       if (completedIndex === -1) {
-        habits[habitIndex].completed.push(timestamp)
+        habits[habitIndex].completed.push(dateStr)
       } else {
         habits[habitIndex].completed.splice(completedIndex, 1)
       }
@@ -434,7 +570,7 @@ export default defineComponent({
 
     goToStats(habit) {
       uni.navigateTo({
-        url: `/pages/habit-stats/habit-stats?id=${habit.id}&title=${encodeURIComponent(habit.title)}`
+        url: `/pages/habit-stats/habit-stats?habit_id=${habit.habit_id}&title=${encodeURIComponent(habit.title)}`
       })
     },
 
@@ -542,25 +678,40 @@ export default defineComponent({
 
     editHabit(habit) {
       uni.navigateTo({
-        url: `/pages/add-habit/add-habit?id=${habit.id}`
+        url: `/pages/add-habit/add-habit?habit_id=${habit.habit_id}`
       })
     },
 
-    deleteHabit(habit) {
+    async deleteHabit(habit) {
       uni.showModal({
         title: '确认删除',
         content: '确定要删除这个习惯吗？此操作不可恢复。',
         confirmColor: '#FF3B30',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            const habits = uni.getStorageSync('habits') || []
-            const updatedHabits = habits.filter(h => h.id !== habit.id)
-            uni.setStorageSync('habits', updatedHabits)
-            this.loadHabits()
-            uni.showToast({
-              title: '删除成功',
-              icon: 'success'
-            })
+            try {
+              // 调用删除 API
+              const res = await apiService.deleteHabit(habit.habit_id)
+              
+              if (res.status === 'success') {
+                // API 删除成功后，更新本地存储
+                const habits = uni.getStorageSync('habits') || []
+                const updatedHabits = habits.filter(h => h.habit_id !== habit.habit_id)
+                uni.setStorageSync('habits', updatedHabits)
+                this.loadHabits()
+                uni.showToast({
+                  title: '删除成功',
+                  icon: 'success'
+                })
+              } else {
+                throw new Error(res.message || '删除失败')
+              }
+            } catch (error) {
+              uni.showToast({
+                title: error.message || '删除失败',
+                icon: 'none'
+              })
+            }
           }
         }
       })
@@ -608,7 +759,7 @@ export default defineComponent({
     handleSaveNote({timestamp, content}) {
       const noteTimestamp = Date.now()
       const habits = uni.getStorageSync('habits') || []
-      const habitIndex = habits.findIndex(h => h.id === this.currentHabit.id)
+      const habitIndex = habits.findIndex(h => h.habit_id === this.currenthabit.habit_id)
 
       habits[habitIndex].notes.push({
         timestamp: noteTimestamp,
@@ -640,11 +791,11 @@ export default defineComponent({
     },
 
     handleCardLongPress(habit) {
-      this.flippedCards[habit.id] = true
+      this.flippedCards[habit.habit_id] = true
     },
 
     handleCardTouchEnd(habit) {
-      this.flippedCards[habit.id] = false
+      this.flippedCards[habit.habit_id] = false
     },
 
     handleTouchStart(event) {
@@ -698,10 +849,6 @@ export default defineComponent({
       return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
     },
 
-    isCompletedForMonthDay(habit, day) {
-      const timestamp = new Date(this.currentYear, this.currentMonth - 1, day).getTime()
-      return habit.completed.includes(timestamp)
-    },
 
     isMonthToday(day) {
       const today = new Date()
@@ -714,66 +861,6 @@ export default defineComponent({
       const today = new Date()
       const targetDate = new Date(this.currentYear, this.currentMonth - 1, day)
       return targetDate > today
-    },
-
-    handleMonthDayClick(habit, day) {
-      const timestamp = new Date(this.currentYear, this.currentMonth - 1, day).getTime()
-      const today = new Date()
-      const targetDate = new Date(this.currentYear, this.currentMonth - 1, day)
-
-      if (targetDate > today) {
-        uni.showToast({
-          title: '未来还未来哦~',
-          icon: 'none',
-          duration: 1000
-        })
-        return
-      }
-
-      if (targetDate.getDate() !== today.getDate() ||
-          targetDate.getMonth() !== today.getMonth() ||
-          targetDate.getFullYear() !== today.getFullYear()) {
-        uni.showToast({
-          title: '请点击习惯卡，在日历中进行补打卡',
-          icon: 'none',
-          duration: 1000
-        })
-        return
-      }
-
-      const habits = uni.getStorageSync('habits') || []
-      const habitIndex = habits.findIndex(h => h.id === habit.id)
-      if (habitIndex === -1) return
-
-      const completedIndex = habits[habitIndex].completed.indexOf(timestamp)
-      if (completedIndex === -1) {
-        habits[habitIndex].completed.push(timestamp)
-        const monthStart = new Date(this.currentYear, this.currentMonth - 1, 1)
-        const monthEnd = new Date(this.currentYear, this.currentMonth, 0)
-        const monthCompletedCount = habits[habitIndex].completed.filter(time => {
-          const date = new Date(time)
-          return date >= monthStart && date <= monthEnd
-        }).length
-
-        this.showRewardCard = true
-        this.rewardTitle = '打卡成功！'
-        this.rewardMessage = ''
-        this.currentHabit = {
-          id: habit.id,
-          name: habit.title,
-          icon: habit.icon,
-          color: habit.color
-        }
-        this.rewardStats = {
-          count: monthCompletedCount
-        }
-      } else {
-        habits[habitIndex].completed.splice(completedIndex, 1)
-      }
-
-      uni.setStorageSync('habits', habits)
-      this.loadHabits()
-      uni.vibrateShort()
     },
 
     getMonthCompletionCount(habit) {
@@ -1107,10 +1194,10 @@ export default defineComponent({
     mergeImportData(importedHabits) {
       try {
         const currentHabits = uni.getStorageSync('habits') || []
-        const habitMap = new Map(currentHabits.map(habit => [habit.id, habit]))
+        const habitMap = new Map(currentHabits.map(habit => [habit.habit_id, habit]))
 
         importedHabits.forEach(importedHabit => {
-          const existingHabit = habitMap.get(importedHabit.id)
+          const existingHabit = habitMap.get(importedhabit.habit_id)
           if (existingHabit) {
             const completedSet = new Set([...existingHabit.completed, ...importedHabit.completed])
             existingHabit.completed = Array.from(completedSet)
@@ -1130,7 +1217,7 @@ export default defineComponent({
             existingHabit.color = importedHabit.color
             existingHabit.flag = importedHabit.flag
           } else {
-            habitMap.set(importedHabit.id, importedHabit)
+            habitMap.set(importedhabit.habit_id, importedHabit)
           }
         })
 
@@ -1249,22 +1336,35 @@ export default defineComponent({
     }
   },
 
-  onShow() {
+  async onShow() {
+    // 先获取用户信息
+    this.loadUserInfo()
+
+    // 加载习惯数据
     this.loadHabits()
     this.updateDateInfo()
     this.startClock()
-    const hasShownReminder = uni.getStorageSync('has_shown_data_loss_reminder')
-    if (!hasShownReminder) {
-      uni.showModal({
-        title: '数据安全提醒',
-        content: '请注意：在微信设置中选择"清理小程序缓存"会导致所有数据被删除。建议定期使用导出功能备份您的数据，以防数据丢失。',
-        confirmText: '我知道了',
-        success: (res) => {
-          if (res.confirm) {
-            uni.setStorageSync('has_shown_data_loss_reminder', true)
+    
+    // 加载AI消息
+    if (this.habits.length === 0) {
+      const initialMessage = this.default_message_list[0]
+      this.aiMessage = {
+        emoji: initialMessage.emoji,
+        content: initialMessage.content.replace('{nickname}', this.nickname)
+      }
+    } else {
+      // 如果有习惯，调用 API 获取建议
+      try {
+        const res = await apiService.getAISuggestion()
+        if (res.status === 'success' && res.data) {
+          this.aiMessage = {
+            emoji: res.data.emoji || this.default_message_list[0].emoji,
+            content: res.data.suggestion || this.default_message_list[0].content
           }
         }
-      })
+      } catch (error) {
+        console.error('获取 AI 建议失败:', error)
+      }
     }
   },
 
@@ -1454,6 +1554,22 @@ export default defineComponent({
   height: 100%;
   transition: width 0.3s ease;
   width: 0;
+}
+
+.progress-fill.perfect {
+  animation: perfect-pulse 2s infinite;
+}
+
+@keyframes perfect-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 

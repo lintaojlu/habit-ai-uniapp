@@ -1,19 +1,35 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const utils_api = require("../../utils/api.js");
 const _sfc_main = {
   data() {
     return {
       userInfo: {
-        avatarUrl: "",
-        nickName: ""
+        user_id: "",
+        nickname: "",
+        avatar_url: "",
+        ai_character_name: "",
+        telephone: ""
       },
-      aiRoles: ["助手", "教练", "朋友", "专家"],
+      aiCharacters: [],
+      // AI角色列表
       selectedRoleIndex: 0
     };
   },
+  computed: {
+    aiCharacterNames() {
+      return this.aiCharacters.map((char) => char.name);
+    },
+    currentCharacterName() {
+      var _a;
+      if (this.aiCharacters.length === 0)
+        return "加载中...";
+      return ((_a = this.aiCharacters[this.selectedRoleIndex]) == null ? void 0 : _a.name) || "请选择角色";
+    }
+  },
   onLoad() {
     this.loadUserInfo();
-    this.loadAISettings();
+    this.loadAICharacters();
   },
   methods: {
     loadUserInfo() {
@@ -22,21 +38,48 @@ const _sfc_main = {
         this.userInfo = userInfo;
       }
     },
-    loadAISettings() {
-      const aiRole = common_vendor.index.getStorageSync("aiRole");
-      if (aiRole) {
-        const index = this.aiRoles.indexOf(aiRole);
-        if (index !== -1) {
-          this.selectedRoleIndex = index;
+    async loadAICharacters() {
+      try {
+        const characters = common_vendor.index.getStorageSync("aiCharacters");
+        if (characters) {
+          this.aiCharacters = characters;
+          if (this.userInfo.ai_character_name) {
+            const currentIndex = this.aiCharacters.findIndex(
+              (char) => char.name === this.userInfo.ai_character_name
+            );
+            if (currentIndex !== -1) {
+              this.selectedRoleIndex = currentIndex;
+            }
+          }
+        } else {
+          const response = await utils_api.apiService.getAICharacterList();
+          if (response.status === "success") {
+            this.aiCharacters = response.data;
+            common_vendor.index.setStorageSync("aiCharacters", response.data);
+            if (this.userInfo.ai_character_name) {
+              const currentIndex = this.aiCharacters.findIndex(
+                (char) => char.name === this.userInfo.ai_character_name
+              );
+              if (currentIndex !== -1) {
+                this.selectedRoleIndex = currentIndex;
+              }
+            }
+          }
         }
+      } catch (error) {
+        common_vendor.index.__f__("error", "at pages/settings/settings.vue:138", "加载AI角色失败:", error);
+        common_vendor.index.showToast({
+          title: "加载角色失败",
+          icon: "none"
+        });
+      } finally {
+        common_vendor.index.hideLoading();
       }
     },
-    onRoleChange(e) {
-      this.selectedRoleIndex = e.detail.value;
-      common_vendor.index.setStorageSync("aiRole", this.aiRoles[this.selectedRoleIndex]);
+    onPrivacy() {
       common_vendor.index.showToast({
-        title: "AI角色已更新",
-        icon: "success"
+        title: "功能开发中",
+        icon: "none"
       });
     },
     onFeedback() {
@@ -54,7 +97,7 @@ const _sfc_main = {
           if (res.confirm) {
             common_vendor.index.clearStorageSync();
             common_vendor.index.reLaunch({
-              url: "/pages/index/index"
+              url: "/pages/login/login"
             });
           }
         }
@@ -64,14 +107,15 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: $data.userInfo.avatarUrl || "/static/default-avatar.png",
-    b: common_vendor.t($data.userInfo.nickName || "未设置昵称"),
-    c: common_vendor.t($data.aiRoles[$data.selectedRoleIndex]),
+    a: $data.userInfo.avatar_url || "https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0",
+    b: common_vendor.t($data.userInfo.nickname || "未设置昵称"),
+    c: common_vendor.t($options.currentCharacterName),
     d: $data.selectedRoleIndex,
-    e: $data.aiRoles,
-    f: common_vendor.o((...args) => $options.onRoleChange && $options.onRoleChange(...args)),
-    g: common_vendor.o((...args) => $options.onFeedback && $options.onFeedback(...args)),
-    h: common_vendor.o((...args) => $options.onLogout && $options.onLogout(...args))
+    e: $options.aiCharacterNames,
+    f: common_vendor.o((...args) => _ctx.onRoleChange && _ctx.onRoleChange(...args)),
+    g: common_vendor.o((...args) => $options.onPrivacy && $options.onPrivacy(...args)),
+    h: common_vendor.o((...args) => $options.onFeedback && $options.onFeedback(...args)),
+    i: common_vendor.o((...args) => $options.onLogout && $options.onLogout(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

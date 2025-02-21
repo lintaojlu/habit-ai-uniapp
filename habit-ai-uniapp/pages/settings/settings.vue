@@ -3,10 +3,10 @@
     <!-- 用户信息区域 -->
     <view class="settings-card user-info-section">
       <view class="avatar-wrapper">
-        <image class="avatar" :src="userInfo.avatarUrl || '/static/default-avatar.png'" mode="aspectFill"/>
+        <image class="avatar" :src="userInfo.avatar_url || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'" mode="aspectFill"/>
       </view>
       <view class="user-info">
-        <text class="nickname">{{ userInfo.nickName || '未设置昵称' }}</text>
+        <text class="nickname">{{ userInfo.nickname || '未设置昵称' }}</text>
       </view>
     </view>
 
@@ -16,16 +16,22 @@
         <text class="setting-icon">🤖</text>
         <text class="setting-label">角色设置</text>
       </view>
-      <picker class="role-picker" :value="selectedRoleIndex" :range="aiRoles" @change="onRoleChange">
+      <picker 
+        ref="rolePicker"
+        class="role-picker" 
+        :value="selectedRoleIndex" 
+        :range="aiCharacterNames" 
+        @change="onRoleChange"
+      >
         <view class="picker-value">
-          {{ aiRoles[selectedRoleIndex] }}
+          {{ currentCharacterName }}
           <text class="arrow">></text>
         </view>
       </picker>
     </view>
 
     <!-- 隐私设置 -->
-    <view class="settings-card setting-item">
+    <view class="settings-card setting-item" @tap="onPrivacy">
       <view class="setting-left">
         <text class="setting-icon">🔒</text>
         <text class="setting-label">隐私设置</text>
@@ -34,88 +40,135 @@
     </view>
 
     <!-- 用户反馈区域 -->
-    <view class="settings-card setting-item">
+    <view class="settings-card setting-item" @tap="onFeedback">
       <view class="setting-left">
         <text class="setting-icon">📢</text>
         <text class="setting-label">反馈与支持</text>
       </view>
-      <text class="arrow" @tap="onFeedback">></text>
+      <text class="arrow">></text>
     </view>
 
     <!-- 退出登录按钮 -->
-    <view class="settings-card setting-item">
+    <view class="settings-card setting-item" @tap="onLogout">
       <view class="setting-left">
         <text class="setting-icon">🚪</text>
         <text class="setting-label logout">退出登录</text>
       </view>
-      <text class="arrow" @tap="onLogout">></text>
+      <text class="arrow">></text>
     </view>
   </view>
-
 </template>
 
 <script>
+import { apiService } from '@/utils/api.js'  // 添加导入
+
 export default {
   data() {
     return {
       userInfo: {
-        avatarUrl: '',
-        nickName: ''
+        user_id: '',
+        nickname: '',
+        avatar_url: '',
+        ai_character_name: '',
+        telephone: '',
       },
-      aiRoles: ['助手', '教练', '朋友', '专家'],
+      aiCharacters: [], // AI角色列表
       selectedRoleIndex: 0
     }
   },
+
+  computed: {
+    aiCharacterNames() {
+      return this.aiCharacters.map(char => char.name)
+    },
+    currentCharacterName() {
+      if (this.aiCharacters.length === 0) return '加载中...'
+      return this.aiCharacters[this.selectedRoleIndex]?.name || '请选择角色'
+    }
+  },
+
   onLoad() {
     this.loadUserInfo()
-    this.loadAISettings()
+    this.loadAICharacters()
   },
+
   methods: {
     loadUserInfo() {
-      // 从本地存储加载用户信息
       const userInfo = uni.getStorageSync('userInfo')
       if (userInfo) {
         this.userInfo = userInfo
       }
     },
-    loadAISettings() {
-      // 从本地存储加载AI设置
-      const aiRole = uni.getStorageSync('aiRole')
-      if (aiRole) {
-        const index = this.aiRoles.indexOf(aiRole)
-        if (index !== -1) {
-          this.selectedRoleIndex = index
+
+    async loadAICharacters() {
+      try {
+        // 先从本地获取角色列表
+        const characters = uni.getStorageSync('aiCharacters')
+        if (characters) {
+          this.aiCharacters = characters
+          
+          // 如果用户有设置角色，找到对应的索引
+          if (this.userInfo.ai_character_name) {
+            const currentIndex = this.aiCharacters.findIndex(
+              char => char.name === this.userInfo.ai_character_name
+            )
+            if (currentIndex !== -1) {
+              this.selectedRoleIndex = currentIndex
+            }
+          }
+        } else {
+          // 如果本地没有角色列表，从服务器获取
+          const response = await apiService.getAICharacterList()
+          if (response.status === 'success') {
+            this.aiCharacters = response.data
+            uni.setStorageSync('aiCharacters', response.data)
+            
+            // 设置当前选中的角色索引
+            if (this.userInfo.ai_character_name) {
+              const currentIndex = this.aiCharacters.findIndex(
+                char => char.name === this.userInfo.ai_character_name
+              )
+              if (currentIndex !== -1) {
+                this.selectedRoleIndex = currentIndex
+              }
+            }
+          }
         }
+      } catch (error) {
+        console.error('加载AI角色失败:', error)
+        uni.showToast({
+          title: '加载角色失败',
+          icon: 'none'
+        })
+      } finally {
+        uni.hideLoading()
       }
     },
-    onRoleChange(e) {
-      this.selectedRoleIndex = e.detail.value
-      // 保存AI角色设置
-      uni.setStorageSync('aiRole', this.aiRoles[this.selectedRoleIndex])
+
+    onPrivacy() {
       uni.showToast({
-        title: 'AI角色已更新',
-        icon: 'success'
+        title: '功能开发中',
+        icon: 'none'
       })
     },
+
     onFeedback() {
-      // 跳转到反馈页面或打开反馈表单
       uni.showModal({
         title: '意见反馈',
         content: '请通过以下邮箱联系我们：\nsupport@habitai.com',
         showCancel: false
       })
     },
+
     onLogout() {
       uni.showModal({
         title: '确认退出',
         content: '确定要退出登录吗？',
         success: (res) => {
           if (res.confirm) {
-            // 清除用户信息和相关数据
             uni.clearStorageSync()
-            // 重定向到登录页面
             uni.reLaunch({
-              url: '/pages/index/index'
+              url: '/pages/login/login'
             })
           }
         }
@@ -182,6 +235,11 @@ export default {
   align-items: center;
   justify-content: space-between;
   min-height: 100rpx;
+  cursor: pointer; /* 添加手型光标 */
+}
+
+.setting-item:active {
+  opacity: 0.8; /* 添加点击反馈效果 */
 }
 
 .setting-left {
