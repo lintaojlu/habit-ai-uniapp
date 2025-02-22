@@ -17,11 +17,11 @@ export function request(options) {
                 ...options.header
             },
             success: (res) => {
+                console.log(`[API Request] ${options.url} - ${options.method}`, options.data);
+
                 if (res.statusCode === 401) {
-                    // token 失效，跳转登录页
-                    uni.redirectTo({
-                        url: '/pages/login/login'
-                    });
+                    console.log(`[API Response] ${options.url} - 401 Unauthorized`);
+                    uni.redirectTo({ url: '/pages/login/login' });
                     reject(new Error('登录失败，请重新登录'));
                     return;
                 }
@@ -29,11 +29,13 @@ export function request(options) {
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     resolve(res.data);
                 } else {
-                    console.error('API request failed:', res);
+                    console.error(`[API Response] ${options.url} - Failed:`, res);
                     reject(res.data || { message: '请求失败' });
                 }
             },
             fail: (err) => {
+                console.log(`[API Request] ${options.url} - ${options.method}`, options.data);
+                console.error(`[API Response] ${options.url} - Error:`, err);
                 reject(err || { message: '网络错误' });
             }
         });
@@ -42,193 +44,129 @@ export function request(options) {
 // Mock API 服务，确保所有请求都返回成功
 export const apiService = {
     register(userData) {
-        return Promise.resolve({
-            status: "success",
-            user_id: "mock_user_id",
-            token: "mock_token"
+        return request({
+            url: '/habit-ai/user/register',
+            method: 'POST',
+            data: userData
         });
     },
     
     login(loginData) {
-        return Promise.resolve({
-            status: "success",
-            user_id: "mock_user_id",
-            token: "mock_token"
+        return request({
+            url: '/habit-ai/user/login',
+            method: 'POST',
+            data: loginData
         });
     },
     
     getUserInfo() {
-        return Promise.resolve({
-            status: "success",
-            data: {
-                user_id: "mock_user_id",
-                nickname: "Mock User",
-                avatar_url: "https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0",
-                wechat_openid: "mock_openid",
-                ai_character_name: "毒舌",
-                telephone: "1234567890",
-                created_at: "2023-09-01T00:00:00Z",
-                updated_at: "2023-09-02T00:00:00Z",
-                registration_code: "mock_code"
-            }
+        return request({
+            url: '/habit-ai/user/info',
+            method: 'GET'
         });
     },
     
     updateUserInfo(userData) {
-        return Promise.resolve({
-            status: "success",
-            message: "用户数据已更新"
+        return request({
+            url: '/habit-ai/user/update',
+            method: 'PUT',
+            data: userData
         });
     },
     
     createHabit(habitData) {
-        return Promise.resolve({
-            status: "success",
-            habit_id: "mock_habit_id"
+        return request({
+            url: '/habit-ai/habit/create',
+            method: 'POST',
+            data: habitData
         });
     },
     
     getHabitInfo(habitId) {
-        return Promise.resolve({
-            status: "success",
-            data: {
-                habit_id: habitId,
-                title: "Mock Habit",
-                icon: "🏃",
-                description: "Mock Description",
-                alert_time: { days: [1, 3, 5], time: ["07:00"] },
-                deadline: "2025-12-31T00:00:00Z",
-                completed: ["2025-02-18T07:00:00Z"],
-                streak: { current: 1, longest: 5, longest_start: "2025-02-13T00:00:00Z", longest_end: "2025-02-17T00:00:00Z" },
-                is_archived: false,
-                order: 0
-            }
+        return request({
+            url: `/habit-ai/habit/info?habit_id=${habitId}`,
+            method: 'GET'
         });
     },
     
-    // TODO 修改了input和output，注意
     updateHabit(habit_id, habitData) {
-        return Promise.resolve({
-            status: "success",
-            message: "习惯已更新"
+        return request({
+            url: '/habit-ai/habit/update',
+            method: 'PUT',
+            data: { habit_id, ...habitData }
         });
     },
     
     deleteHabit(habitId) {
-        return Promise.resolve({
-            status: "success",
-            message: "习惯已删除"
+        return request({
+            url: '/habit-ai/habit/delete',
+            method: 'DELETE',
+            data: { habit_id: habitId }
         });
     },
     
     recordHabit(habitId) {
-        return Promise.resolve({
-            status: "success",
-            data: {
-                habit_id: habitId,
-                completed: ["2025-02-18T07:00:00Z", "2025-02-20T07:00:00Z", "2025-02-21T07:00:00Z"],
-                streak: { current: 3, longest: 3, longest_start: "2025-02-18T00:00:00Z", longest_end: "2025-02-20T00:00:00Z" },
-                message: {
-                    emoji: "🎉",
-                    content: "打卡成功"
-                }
-            }
+        return request({
+            url: '/habit-ai/habit/checkin',
+            method: 'POST',
+            data: { habit_id: habitId }
         });
     },
     
     getHabitStreak(habitId) {
-        return Promise.resolve({
-            status: "success",
-            data: {
-                habit_id: habitId,
-                streak: { current: 2, longest: 5, longest_start: "2025-02-13T00:00:00Z", longest_end: "2025-02-17T00:00:00Z" }
-            }
+        return request({
+            url: `/habit-ai/habit/streak?habit_id=${habitId}`,
+            method: 'GET'
         });
     },
     
     getHabitList() {
-        return Promise.resolve({
-            status: "success",
-            data: [
-                {
-                    habit_id: "mock_habit_id_1",
-                    title: "Mock Habit 1",
-                    icon: "🏃",
-                    description: "Mock Description 1",
-                    alert_time: { days: [1, 3, 5], time: ["07:00"] },
-                    deadline: "2025-12-31T00:00:00Z",
-                    completed: ["2025-02-18T07:00:00Z"],
-                    streak: { current: 1, longest: 5, longest_start: "2025-02-13T00:00:00Z", longest_end: "2025-02-17T00:00:00Z" },
-                    is_archived: false,
-                    order: 0
-                },
-                {
-                    habit_id: "mock_habit_id_2",
-                    title: "Mock Habit 2",
-                    icon: "🍔",
-                    description: "Mock Description 2",
-                    alert_time: { days: [2, 4], time: ["12:00"] },
-                    deadline: "2025-12-31T00:00:00Z",
-                    completed: ["2025-02-18T12:00:00Z"],
-                    streak: { current: 2, longest: 5, longest_start: "2025-02-13T00:00:00Z", longest_end: "2025-02-17T00:00:00Z" },
-                    is_archived: false,
-                    order: 1
-                }
-            ]
+        return request({
+            url: '/habit-ai/habit/list',
+            method: 'GET'
         });
     },
 
     getAICharacterList() {
-        return Promise.resolve({
-            status: "success",
-            data: [
-                {
-                    character_id: "mock_character_id_1",
-                    name: "Mock Character 1",
-                    description: "Mock Description 1",
-                    icon: "🐶"
-                },
-                {
-                    character_id: "mock_character_id_2",
-                    name: "Mock Character 2",
-                    description: "Mock Description 2",
-                    icon: "🐱"
-                }
-            ]
+        return request({
+            url: '/habit-ai/character/list',
+            method: 'GET'
         });
     },
     
     getMemoryList(params = {}) {
-        return Promise.resolve({
-            status: "success",
-            data: []
+        const queryString = Object.entries(params)
+            .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+            .join('&');
+        return request({
+            url: `/habit-ai/memory/list${queryString ? '?' + queryString : ''}`,
+            method: 'GET'
         });
     },
-    
-    getAISuggestion() {
-        return Promise.resolve({
-            status: "success",
-            data: {
-                emoji: "😥",
-                suggestion: "你再不打卡我花都谢了"
-            }
+
+    getLastMessage() {
+        return request({
+            url: `/habit-ai/message/last`,
+            method: 'GET'
         });
     },
     
     sendConversation(content, sessionId = '') {
-        return Promise.resolve({
-            status: "success",
+        return request({
+            url: '/habit-ai/ai/conversation',
+            method: 'POST',
             data: {
-                session_id: sessionId || "mock_session_id",
-                reply: "这是一个测试回复，模拟 AI 的建议。"
+                content,
+                session_id: sessionId
             }
         });
     },
 
     feedback(params) {
-        return Promise.resolve({
-            status: "success",
-            message: "反馈已提交"
+        return request({
+            url: '/habit-ai/feedback',
+            method: 'POST',
+            data: params
         });
     }
 };

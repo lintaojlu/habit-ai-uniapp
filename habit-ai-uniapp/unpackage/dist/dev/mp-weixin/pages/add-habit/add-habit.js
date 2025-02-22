@@ -261,7 +261,7 @@ const _sfc_main = {
         }
         this.selectedColor = habit.color || "#fff";
       } else {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:505", "Failed to find habit in storage:", {
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:487", "Failed to find habit in storage:", {
           searchId: this.habit_id,
           availableHabits: habits.map((h) => ({
             habit_id: h.habit_id,
@@ -361,9 +361,6 @@ const _sfc_main = {
           res = await utils_api.apiService.createHabit(habitData);
         }
         if (res.status === "success") {
-          if (!this.isEdit) {
-            habitData.habit_id = res.habit_id;
-          }
           const habits = common_vendor.index.getStorageSync("habits") || [];
           if (this.isEdit) {
             const index = habits.findIndex((h) => h.habit_id === this.habit_id);
@@ -372,11 +369,12 @@ const _sfc_main = {
                 ...habits[index],
                 ...habitData
               };
+              common_vendor.index.__f__("log", "at pages/add-habit/add-habit.vue:605", "Updated habit:", habits[index]);
             }
           } else {
+            habitData.habit_id = res.data.habit_id;
             habits.push(habitData);
           }
-          common_vendor.index.__f__("log", "at pages/add-habit/add-habit.vue:631", "Updated habits:", habits);
           common_vendor.index.setStorageSync("habits", habits);
           common_vendor.index.showToast({
             title: this.isEdit ? "保存成功" : "添加成功",
@@ -390,7 +388,7 @@ const _sfc_main = {
           throw new Error(res.message || "保存失败");
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:647", "Failed to save habit:", error);
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:626", "Failed to save habit:", error);
         common_vendor.index.showToast({
           title: error.message || "保存失败，请重试",
           icon: "none"
@@ -626,15 +624,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         f: categoryGroup.items.length > 0
       });
     })
-  }) : {}, {
-    O: $data.currentStep === 3
-  }, $data.currentStep === 3 ? {
-    P: common_vendor.t($data.reminderTime),
-    Q: common_vendor.t($options.timePeriod),
-    R: $data.reminderTime,
-    S: common_vendor.o((...args) => $options.onTimeChange && $options.onTimeChange(...args)),
-    T: common_vendor.o((...args) => _ctx.saveHabit && _ctx.saveHabit(...args))
-  } : {});
+  }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);

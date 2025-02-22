@@ -6,7 +6,7 @@
         <image class="avatar" :src="userInfo.avatar_url || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'" mode="aspectFill"/>
       </view>
       <view class="user-info">
-        <text class="nickname">{{ userInfo.nickname || '未设置昵称' }}</text>
+        <text class="nickname">{{ userInfo.nickname }}</text>
       </view>
     </view>
 
@@ -20,7 +20,7 @@
         ref="rolePicker"
         class="role-picker" 
         :value="selectedRoleIndex" 
-        :range="aiCharacterNames" 
+        :range="ai_character_names" 
         @change="onRoleChange"
       >
         <view class="picker-value">
@@ -43,7 +43,7 @@
     <view class="settings-card setting-item" @tap="onFeedback">
       <view class="setting-left">
         <text class="setting-icon">📢</text>
-        <text class="setting-label">反馈与支持</text>
+        <text class="setting-label">意见反馈</text>
       </view>
       <text class="arrow">></text>
     </view>
@@ -55,6 +55,33 @@
         <text class="setting-label logout">退出登录</text>
       </view>
       <text class="arrow">></text>
+    </view>
+
+    <!-- 添加二维码卡片组件 -->
+    <view class="qr-card-container" v-if="showQrCard" @tap="closeQrCard">
+      <view class="qr-card" 
+        :class="[
+          showQrCard && 'slide-in',
+          isClosingDown && 'slide-out-down',
+          isDragging && 'dragging'
+        ]" 
+        :style="dragStyle"
+        @tap.stop
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+      >
+        <view class="qr-date">{{ formattedDate }}</view>
+        <view class="qr-content">
+          <text class="qr-title">加入内测群</text>
+          <image class="qr-image" src="/static/group_qr.png" mode="aspectFit"></image>
+          <text class="qr-desc">扫描二维码加入内测群\n一起交流使用心得</text>
+        </view>
+        <view class="swipe-hint">
+          <text class="hint-text">下滑关闭</text>
+          <text class="arrow-icon">↓</text>
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -73,17 +100,31 @@ export default {
         telephone: '',
       },
       aiCharacters: [], // AI角色列表
-      selectedRoleIndex: 0
+      selectedRoleIndex: 0,  // 添加逗号
+      showQrCard: false,      // 添加 showQrCard
+      isClosingDown: false,
+      isDragging: false,
+      startY: 0,
+      currentY: 0
     }
   },
 
   computed: {
-    aiCharacterNames() {
+    ai_character_names() {
       return this.aiCharacters.map(char => char.name)
     },
     currentCharacterName() {
       if (this.aiCharacters.length === 0) return '加载中...'
       return this.aiCharacters[this.selectedRoleIndex]?.name || '请选择角色'
+    },
+    // 添加 formattedDate 计算属性
+    formattedDate() {
+      const now = new Date()
+      const month = now.getMonth() + 1
+      const date = now.getDate()
+      const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+      const weekDay = weekDays[now.getDay()]
+      return `${month}月${date}日 ${weekDay}`
     }
   },
 
@@ -153,26 +194,62 @@ export default {
     },
 
     onFeedback() {
-      uni.showModal({
-        title: '意见反馈',
-        content: '请通过以下邮箱联系我们：\nsupport@habitai.com',
-        showCancel: false
-      })
+      this.showQrCard = true
     },
 
     onLogout() {
       uni.showModal({
-        title: '确认退出',
+        title: '提示',
         content: '确定要退出登录吗？',
         success: (res) => {
           if (res.confirm) {
+            // 清除本地存储的用户信息
+            uni.removeStorageSync('userInfo')
+            uni.removeStorageSync('token')
+            uni.removeStorageSync('habits')
+            uni.removeStorageSync('aiCharacters')
             uni.clearStorageSync()
+
+            // 重定向到登录页
             uni.reLaunch({
               url: '/pages/login/login'
             })
           }
         }
       })
+    },
+
+    handleTouchStart(e) {
+      this.startY = e.touches[0].clientY
+      this.isDragging = true
+      e.stopPropagation()
+    },
+
+    handleTouchMove(e) {
+      if (!this.isDragging) return
+      this.currentY = e.touches[0].clientY
+      e.preventDefault()
+      e.stopPropagation()
+    },
+
+    handleTouchEnd(e) {
+      if (!this.isDragging) return
+      const dragDistance = this.currentY - this.startY
+      if (dragDistance > 100) {
+        this.closeQrCard()
+      }
+      this.isDragging = false
+      this.startY = 0
+      this.currentY = 0
+      e.stopPropagation()
+    },
+
+    closeQrCard() {
+      this.isClosingDown = true
+      setTimeout(() => {
+        this.showQrCard = false
+        this.isClosingDown = false
+      }, 500)
     }
   }
 }
@@ -235,11 +312,38 @@ export default {
   align-items: center;
   justify-content: space-between;
   min-height: 100rpx;
-  cursor: pointer; /* 添加手型光标 */
+  background: #fff;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .setting-item:active {
-  opacity: 0.8; /* 添加点击反馈效果 */
+  background: #f5f7fa;
+  transform: scale(0.98);
+}
+
+.setting-item::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 20rpx;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.setting-item:active::after {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.setting-item:active .logout {
+  opacity: 0.8;
 }
 
 .setting-left {
@@ -283,5 +387,140 @@ export default {
 
 .logout .setting-label {
   color: #ff3b30;
+}
+
+.qr-card-container {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .3s ease;
+}
+
+.qr-card {
+  width: 85%;
+  max-width: 650rpx;
+  background: rgba(44,44,46,.8);
+  backdrop-filter: blur(20px);
+  border-radius: 32rpx;
+  border: 1px solid hsla(0,0%,100%,.15);
+  padding: 40rpx 30rpx;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(100%);
+  box-shadow: 0 8rpx 32rpx rgba(0,0,0,.2);
+}
+
+.qr-date {
+  background: hsla(0,0%,100%,.1);
+  border-radius: 20rpx;
+  color: hsla(0,0%,100%,.7);
+  font-size: 24rpx;
+  font-weight: 500;
+  padding: 6rpx 16rpx;
+  position: absolute;
+  left: 24rpx;
+  top: 24rpx;
+}
+
+.qr-content {
+  margin: 60rpx 0 30rpx;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30rpx;
+}
+
+.qr-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #ff9f0a;
+}
+
+.qr-image {
+  width: 400rpx;
+  height: 400rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx;
+}
+
+.qr-desc {
+  font-size: 28rpx;
+  color: hsla(0,0%,100%,.9);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.swipe-hint {
+  align-items: center;
+  animation: floatAnimation 2s ease-in-out infinite;
+  color: hsla(0,0%,100%,.6);
+  display: flex;
+  flex-direction: column;
+  margin-top: 20rpx;
+}
+
+.swipe-hint .hint-text {
+  font-size: 24rpx;
+  margin-bottom: 8rpx;
+}
+
+.swipe-hint .arrow-icon {
+  font-size: 32rpx;
+  opacity: .8;
+}
+
+.qr-card.slide-in {
+  animation: slideIn .5s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatAnimation {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10rpx);
+  }
+}
+
+/* 添加下滑相关样式 */
+.qr-card.slide-out-down {
+  animation: slideOutDown .5s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+.qr-card.dragging {
+  transition: none;
+}
+
+@keyframes slideOutDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
 }
 </style>

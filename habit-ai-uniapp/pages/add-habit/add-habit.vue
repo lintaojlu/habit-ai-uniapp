@@ -2,13 +2,13 @@
   <view class="container">
     <!-- 第一步：习惯名称和目标 -->
     <view class="step" v-if="currentStep === 1">
-      <text class="title">为你的习惯起个名字</text>
+      <text class="title">建立一个习惯/任务</text>
       <input
           class="habit-input"
           type="text"
           v-model="habitName"
           maxlength="20"
-          placeholder="设定一个可执行的习惯，例如：每天写1000字论文。（习惯需要明确且可量化，这样才能有效执行）"
+          placeholder="例如：保持运动。从简单做起更易坚持！"
       />
       <view class="input-footer">
         <text class="counter">{{ habitName.length }}/20</text>
@@ -18,7 +18,7 @@
           class="habit-input flag-input"
           v-model="habitFlag"
           maxlength="100"
-          placeholder="描述你的目标，例如：3.10号预答辩，需要完成完整论文。在这之前每天需要1000字论文，最后还要用一周的时间做Slides。（目标尽可能详细，AI会据此了解你，从而更好帮助你）"
+          placeholder="量化你的目标，例如：减重10公斤，获得马甲线！{{\n}}目标尽可能详细，AI需要数据才能了解你哦～🫰"
       />
       <view class="input-footer">
         <text class="counter">{{ habitFlag.length }}/100</text>
@@ -80,7 +80,7 @@
         </view>
         <text class="habit-name">为"{{ habitName }}"</text>
       </view>
-      <text class="title">选择一个习惯图标</text>
+      <text class="title">选择一个图标</text>
       <view class="search-row">
         <input
             class="search-input"
@@ -197,25 +197,7 @@
         </view>
       </scroll-view>
     </view>
-
-    <!-- 第三步：设置提醒 -->
-    <view class="step" v-if="currentStep === 3">
-      <text class="title">设置每日提醒时间</text>
-      <text class="subtitle">通过每日提醒，保持你的习惯不间断。</text>
-      <view class="time-picker">
-        <picker
-            mode="time"
-            :value="reminderTime"
-            @change="onTimeChange"
-        >
-          <view class="time-display">
-            <text class="time">{{ reminderTime }}</text>
-            <text class="period">{{ timePeriod }}</text>
-          </view>
-        </picker>
-      </view>
-      <button class="save-button" @tap="saveHabit">保存提醒</button>
-    </view>
+    
   </view>
 </template>
 
@@ -611,12 +593,8 @@ export default {
 
         if (res.status === 'success') {
           // API 调用成功，更新本地存储
-          if (!this.isEdit) {
-            habitData.habit_id = res.habit_id;  // 新建时使用返回的 habit_id
-          }
+          const habits = uni.getStorageSync('habits') || [];
 
-          const habits = uni.getStorageSync("habits") || [];
-          
           if (this.isEdit) {
             const index = habits.findIndex(h => h.habit_id === this.habit_id);
             if (index !== -1) {
@@ -624,11 +602,12 @@ export default {
                 ...habits[index],
                 ...habitData
               };
+              console.log("Updated habit:", habits[index]);
             }
           } else {
+            habitData.habit_id = res.data.habit_id;
             habits.push(habitData);
           }
-          console.log("Updated habits:", habits);
 
           uni.setStorageSync("habits", habits);
           uni.showToast({

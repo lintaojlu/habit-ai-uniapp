@@ -1,0 +1,1 @@
+<view class="container"><view class="guide-content"><image class="qr-code" src="{{a}}" mode="aspectFit"></image><text class="guide-title">一步之遥🎉</text><text class="guide-desc">扫描上方二维码，添加AI为好友\n它将帮助你更好地完成目标</text></view><button class="complete-btn" bindtap="{{b}}">完成添加</button></view>

@@ -34,11 +34,6 @@ const _sfc_main = {
     retroactiveInfo: {
       type: Object,
       default: null
-    },
-    mode: {
-      type: String,
-      default: "calendar",
-      validator: (value) => ["calendar", "week", "month"].includes(value)
     }
   },
   data() {
@@ -87,7 +82,7 @@ const _sfc_main = {
         type = "retroactive";
       } else if (((_a = this.streakInfo) == null ? void 0 : _a.count) > 0) {
         type = "streak";
-      } else if (this.mode === "week") {
+      } else {
         type = "week";
       }
       const messages = this.motivationalMessages[type];
@@ -129,26 +124,11 @@ const _sfc_main = {
         return;
       const dragDistance = this.currentY - this.startY;
       if (dragDistance > 100) {
-        const actualTimestamp = this.retroactiveInfo ? this.retroactiveInfo.retroTimestamp : this.targetTimestamp;
-        const now = /* @__PURE__ */ new Date();
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
-        weekStart.setHours(0, 0, 0, 0);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        weekEnd.setHours(23, 59, 59, 999);
-        const targetDate = new Date(actualTimestamp);
-        if (targetDate < weekStart || targetDate > weekEnd) {
-          common_vendor.index.showToast({
-            title: "该笔记将记录到对应周次",
-            icon: "none"
-          });
-        }
         if (this.noteContent.trim()) {
-          this.$emit("save-note", {
-            timestamp: actualTimestamp,
-            content: this.noteContent.trim(),
-            retroactiveInfo: this.retroactiveInfo
+          this.$emit("saveNote", {
+            content: this.noteContent,
+            timestamp: Date.now(),
+            role: "user"
           });
         }
         this.closeCard();
@@ -213,39 +193,28 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     h: common_vendor.t($props.message || $options.randomMessage),
     i: $props.stats || $props.streakInfo || $props.habitInfo
   }, $props.stats || $props.streakInfo || $props.habitInfo ? common_vendor.e({
-    j: $props.mode === "week" && $props.habitInfo
-  }, $props.mode === "week" && $props.habitInfo ? {
+    j: $props.habitInfo
+  }, $props.habitInfo ? {
     k: common_vendor.t($props.stats ? $props.stats.count : 0),
     l: common_vendor.t($props.habitInfo.name.slice(0, 8))
   } : {}, {
-    m: $props.mode === "calendar" && $props.habitInfo
-  }, $props.mode === "calendar" && $props.habitInfo ? {
-    n: common_vendor.t($options.formatDate($props.targetTimestamp, "yearMonth")),
-    o: common_vendor.t(($props.stats ? $props.stats.count : 0) + 1),
-    p: common_vendor.t($props.habitInfo.name.slice(0, 8))
-  } : {}, {
-    q: $props.mode === "month" && $props.habitInfo
-  }, $props.mode === "month" && $props.habitInfo ? {
-    r: common_vendor.t($props.stats ? $props.stats.count : 0),
-    s: common_vendor.t($props.habitInfo.name.slice(0, 8))
-  } : {}, {
-    t: $props.streakInfo
+    m: $props.streakInfo
   }, $props.streakInfo ? {
-    v: common_vendor.t($props.streakInfo.count)
+    n: common_vendor.t($props.streakInfo.count)
   } : {}) : {}, {
-    w: $data.noteContent,
-    x: common_vendor.o(($event) => $data.noteContent = $event.detail.value),
-    y: common_vendor.n($props.show && "slide-in"),
-    z: common_vendor.n($data.isClosingUp && "slide-out-up"),
-    A: common_vendor.n($data.isClosingDown && "slide-out-down"),
-    B: common_vendor.n($data.isDragging && "dragging"),
-    C: common_vendor.s($options.dragStyle),
-    D: common_vendor.o(() => {
+    o: $data.noteContent,
+    p: common_vendor.o(($event) => $data.noteContent = $event.detail.value),
+    q: common_vendor.n($props.show && "slide-in"),
+    r: common_vendor.n($data.isClosingUp && "slide-out-up"),
+    s: common_vendor.n($data.isClosingDown && "slide-out-down"),
+    t: common_vendor.n($data.isDragging && "dragging"),
+    v: common_vendor.s($options.dragStyle),
+    w: common_vendor.o(() => {
     }),
-    E: common_vendor.o((...args) => $options.handleContainerClick && $options.handleContainerClick(...args)),
-    F: common_vendor.o((...args) => $options.handleTouchStart && $options.handleTouchStart(...args)),
-    G: common_vendor.o((...args) => $options.handleTouchMove && $options.handleTouchMove(...args)),
-    H: common_vendor.o((...args) => $options.handleTouchEnd && $options.handleTouchEnd(...args))
+    x: common_vendor.o((...args) => $options.handleContainerClick && $options.handleContainerClick(...args)),
+    y: common_vendor.o((...args) => $options.handleTouchStart && $options.handleTouchStart(...args)),
+    z: common_vendor.o((...args) => $options.handleTouchMove && $options.handleTouchMove(...args)),
+    A: common_vendor.o((...args) => $options.handleTouchEnd && $options.handleTouchEnd(...args))
   }) : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

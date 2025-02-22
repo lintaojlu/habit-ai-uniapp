@@ -47,10 +47,34 @@
   align-items: center;
   justify-content: space-between;
   min-height: 100rpx;
-  cursor: pointer; /* 添加手型光标 */
+  background: #fff;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 .setting-item:active {
-  opacity: 0.8; /* 添加点击反馈效果 */
+  background: #f5f7fa;
+  transform: scale(0.98);
+}
+.setting-item::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 20rpx;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+.setting-item:active::after {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+.setting-item:active .logout {
+  opacity: 0.8;
 }
 .setting-left {
   display: flex;
@@ -86,4 +110,125 @@
 }
 .logout .setting-label {
   color: #ff3b30;
+}
+.qr-card-container {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .3s ease;
+}
+.qr-card {
+  width: 85%;
+  max-width: 650rpx;
+  background: rgba(44,44,46,.8);
+  -webkit-backdrop-filter: blur(20px);
+          backdrop-filter: blur(20px);
+  border-radius: 32rpx;
+  border: 1px solid hsla(0,0%,100%,.15);
+  padding: 40rpx 30rpx;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(100%);
+  box-shadow: 0 8rpx 32rpx rgba(0,0,0,.2);
+}
+.qr-date {
+  background: hsla(0,0%,100%,.1);
+  border-radius: 20rpx;
+  color: hsla(0,0%,100%,.7);
+  font-size: 24rpx;
+  font-weight: 500;
+  padding: 6rpx 16rpx;
+  position: absolute;
+  left: 24rpx;
+  top: 24rpx;
+}
+.qr-content {
+  margin: 60rpx 0 30rpx;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30rpx;
+}
+.qr-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #ff9f0a;
+}
+.qr-image {
+  width: 400rpx;
+  height: 400rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx;
+}
+.qr-desc {
+  font-size: 28rpx;
+  color: hsla(0,0%,100%,.9);
+  text-align: center;
+  line-height: 1.6;
+}
+.swipe-hint {
+  align-items: center;
+  animation: floatAnimation 2s ease-in-out infinite;
+  color: hsla(0,0%,100%,.6);
+  display: flex;
+  flex-direction: column;
+  margin-top: 20rpx;
+}
+.swipe-hint .hint-text {
+  font-size: 24rpx;
+  margin-bottom: 8rpx;
+}
+.swipe-hint .arrow-icon {
+  font-size: 32rpx;
+  opacity: .8;
+}
+.qr-card.slide-in {
+  animation: slideIn .5s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes slideIn {
+0% {
+    opacity: 0;
+    transform: translateY(100%);
+}
+100% {
+    opacity: 1;
+    transform: translateY(0);
+}
+}
+@keyframes floatAnimation {
+0%, 100% {
+    transform: translateY(0);
+}
+50% {
+    transform: translateY(-10rpx);
+}
+}
+
+/* 添加下滑相关样式 */
+.qr-card.slide-out-down {
+  animation: slideOutDown .5s cubic-bezier(.4,0,.2,1) forwards;
+}
+.qr-card.dragging {
+  transition: none;
+}
+@keyframes slideOutDown {
+0% {
+    opacity: 1;
+    transform: translateY(0);
+}
+100% {
+    opacity: 0;
+    transform: translateY(100%);
+}
 }

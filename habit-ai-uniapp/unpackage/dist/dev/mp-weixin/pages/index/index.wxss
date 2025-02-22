@@ -7,9 +7,6 @@
   min-height: 100vh;
   padding: 20rpx 40rpx;
 }
-.container, .ai-message {
-  box-sizing: border-box;
-}
 .ai-message {
   background: #fff;
   left: 0;
@@ -18,6 +15,7 @@
   right: 0;
   width: 100%;
   z-index: 100;
+  box-sizing: border-box;
 }
 .ai-message .ai-message-card {
   background: #f5f7fa;
@@ -28,27 +26,45 @@
   align-items: center;
   gap: 20rpx;
   transition: all 0.3s ease;
+  width: 100%; /* 添加这行 */
+  box-sizing: border-box; /* 添加这行 */
 }
 .ai-message .ai-message-card:active {
   opacity: 0.9;
   transform: scale(0.98);
 }
 .ai-message .ai-message-card .ai-message-icon {
-  font-size: 40rpx;
-  color: #fff;
-  width: 70rpx;
-  height: 70rpx;
-  border-radius: 16rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 12rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 55rpx;
   flex-shrink: 0;
 }
 .ai-message .ai-message-card .ai-message-content {
+  position: relative;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
   color: #2c3e50;
   font-size: 28rpx;
   line-height: 1.5;
-  flex: 1;
+  max-width: 80%;
+}
+
+/* 添加气泡尖角 */
+.ai-message .ai-message-card .ai-message-content::before {
+  content: '';
+  position: absolute;
+  left: -16rpx;
+  top: 24rpx;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 16rpx 16rpx 16rpx 0;
+  border-color: transparent #fff transparent transparent;
 }
 .container, .header {
   box-sizing: border-box;
@@ -90,21 +106,22 @@
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .1);
   display: flex;
   height: 100%;
-  padding: 12rpx 24rpx;
-  gap: 8rpx;
+  padding: 16rpx 24rpx;
+  gap: 12rpx;
+  justify-content: center;
 }
 .date-info .flip-clock .streak-icon {
-  font-size: 32rpx;
+  font-size: 48rpx; 
   animation: flame 1.5s ease-in-out infinite;
 }
 .date-info .flip-clock .time-unit {
   background: #edf0f5;
   border-radius: 8rpx;
   color: #2c3e50;
-  font-size: 36rpx;
-  font-weight: 500;
-  min-width: 52rpx;
-  padding: 8rpx 12rpx;
+  font-size: 48rpx; 
+  font-weight: 600; 
+  min-width: 64rpx;
+  padding: 8rpx 16rpx;
   position: relative;
   text-align: center;
   transition: all .3s ease;

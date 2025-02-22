@@ -9,19 +9,17 @@ if (!Math) {
   "./pages/add-habit/add-habit.js";
   "./pages/overview/overview.js";
   "./pages/settings/settings.js";
+  "./pages/guide/guide.js";
 }
 const _sfc_main = {
   onLaunch() {
     common_vendor.index.__f__("log", "at App.vue:6", "App Launch");
-    this.checkAndRestoreData();
-    utils_storage.checkAutoBackup();
   },
   onShow() {
     common_vendor.index.__f__("log", "at App.vue:11", "App Show");
   },
   onHide() {
     common_vendor.index.__f__("log", "at App.vue:14", "App Hide");
-    utils_storage.checkAutoBackup();
   },
   methods: {
     async checkAndRestoreData() {

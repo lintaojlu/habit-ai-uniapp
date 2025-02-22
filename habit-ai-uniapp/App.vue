@@ -4,15 +4,15 @@ import * as utils_storage from "./utils/storage.js";
 export default {
   onLaunch() {
     console.log("App Launch");
-    this.checkAndRestoreData();
-    utils_storage.checkAutoBackup();
+    // this.checkAndRestoreData();
+    // utils_storage.checkAutoBackup();
   },
   onShow() {
     console.log("App Show");
   },
   onHide() {
     console.log("App Hide");
-    utils_storage.checkAutoBackup();
+    // utils_storage.checkAutoBackup();
   },
   methods: {
     async checkAndRestoreData() {
@@ -58,6 +58,7 @@ export default {
 
 page {
     --theme-color: #00c988;
+    --theme-color-light: #fff;
     --status-bar-height: 25px;
     --top-window-height: 0px;
     --window-top: 0px;

@@ -33,7 +33,6 @@
 .avatar-section {
   display: flex;
   justify-content: center;
-  margin-bottom: 60rpx;
 }
 .avatar-wrapper {
   background: none;
@@ -41,7 +40,10 @@
   padding: 0;
   margin: 0;
   width: 200rpx; /* 减小头像容器大小 */
-  height: 200rpx;
+  height: 280rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .avatar-wrapper:after {
   border: none;
@@ -49,14 +51,21 @@
 .avatar {
   width: 200rpx; /* 减小头像大小 */
   height: 200rpx;
-  border-radius: 50%; /* 保持圆形 */
+  border-radius: 50%;
+}
+
+/* 添加提示文字样式 */
+.tip {
+  display: block; /* 移除 display: none */
+  font-size: 24rpx;
+  color: #5c6b7a;
+  margin-top: 16rpx;
 }
 
 /* 移除不需要的样式 */
 .nickname-wrapper,
 .nickname-label,
-.nickname-input,
-.tip {
+.nickname-input {
   display: none;
 }
 .nickname-wrapper {

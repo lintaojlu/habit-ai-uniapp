@@ -22,23 +22,10 @@
       <view class="reward-message">{{ message || randomMessage }}</view>
 
       <view class="reward-stats-container" v-if="stats || streakInfo || habitInfo">
-        <view class="reward-stats" v-if="mode === 'week' && habitInfo">
+        <!-- 删除 mode 判断，直接显示 stats -->
+        <view class="reward-stats" v-if="habitInfo">
           <view class="stat-item">
             <text class="stat-value">本周第{{ stats ? stats.count : 0 }}次</text>
-            <text class="stat-label">{{ habitInfo.name.slice(0, 8) }}</text>
-          </view>
-        </view>
-
-        <view class="reward-stats" v-if="mode === 'calendar' && habitInfo">
-          <view class="stat-item">
-            <text class="stat-value">{{ formatDate(targetTimestamp, 'yearMonth') }}第{{ (stats ? stats.count : 0) + 1 }}次</text>
-            <text class="stat-label">{{ habitInfo.name.slice(0, 8) }}</text>
-          </view>
-        </view>
-
-        <view class="reward-stats" v-if="mode === 'month' && habitInfo">
-          <view class="stat-item">
-            <text class="stat-value">本月第{{ stats ? stats.count : 0 }}次</text>
             <text class="stat-label">{{ habitInfo.name.slice(0, 8) }}</text>
           </view>
         </view>
@@ -102,11 +89,6 @@ export default {
     retroactiveInfo: {
       type: Object,
       default: null
-    },
-    mode: {
-      type: String,
-      default: 'calendar',
-      validator: (value) => ['calendar', 'week', 'month'].includes(value)
     }
   },
 
@@ -144,8 +126,8 @@ export default {
         type = 'retroactive'
       } else if (this.streakInfo?.count > 0) {
         type = 'streak'
-      } else if (this.mode === 'week') {
-        type = 'week'
+      } else {
+        type = 'week'  // 默认使用 week 类型的消息
       }
       const messages = this.motivationalMessages[type]
       return messages[Math.floor(Math.random() * messages.length)]
@@ -188,32 +170,12 @@ export default {
       if (!this.isDragging) return
       const dragDistance = this.currentY - this.startY
       if (dragDistance > 100) {
-        const actualTimestamp = this.retroactiveInfo
-            ? this.retroactiveInfo.retroTimestamp
-            : this.targetTimestamp
-
-        const now = new Date()
-        const weekStart = new Date(now)
-        weekStart.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1))
-        weekStart.setHours(0, 0, 0, 0)
-
-        const weekEnd = new Date(weekStart)
-        weekEnd.setDate(weekStart.getDate() + 6)
-        weekEnd.setHours(23, 59, 59, 999)
-
-        const targetDate = new Date(actualTimestamp)
-        if (targetDate < weekStart || targetDate > weekEnd) {
-          uni.showToast({
-            title: '该笔记将记录到对应周次',
-            icon: 'none'
-          })
-        }
-
+        // 下滑关闭时保存笔记
         if (this.noteContent.trim()) {
-          this.$emit('save-note', {
-            timestamp: actualTimestamp,
-            content: this.noteContent.trim(),
-            retroactiveInfo: this.retroactiveInfo
+          this.$emit('saveNote', {
+            content: this.noteContent,
+            timestamp: Date.now(),
+            role: 'user'
           })
         }
         this.closeCard()

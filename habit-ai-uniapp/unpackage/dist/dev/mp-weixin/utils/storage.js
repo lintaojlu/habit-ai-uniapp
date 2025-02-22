@@ -1,68 +1,6 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
 const BACKUP_KEY = "habits_backup";
-const LAST_BACKUP_TIME_KEY = "last_backup_time";
-const AUTO_BACKUP_INTERVAL = 24 * 60 * 60 * 1e3;
-function checkAutoBackup() {
-  const lastBackupTime = common_vendor.index.getStorageSync(LAST_BACKUP_TIME_KEY) || 0;
-  const now = Date.now();
-  if (now - lastBackupTime >= AUTO_BACKUP_INTERVAL) {
-    return backupData();
-  }
-  return false;
-}
-function backupData() {
-  try {
-    const habits = common_vendor.index.getStorageSync("habits") || [];
-    if (habits.length === 0)
-      return false;
-    const backup = {
-      timestamp: Date.now(),
-      data: habits,
-      version: "1.0"
-    };
-    common_vendor.index.setStorageSync(BACKUP_KEY, backup);
-    saveBackupToFile(backup);
-    common_vendor.index.setStorageSync(LAST_BACKUP_TIME_KEY, backup.timestamp);
-    return true;
-  } catch (error) {
-    common_vendor.index.__f__("error", "at utils/storage.js:36", "备份数据失败:", error);
-    return false;
-  }
-}
-function saveBackupToFile(backup) {
-  const fs = common_vendor.index.getFileSystemManager();
-  const fileName = `habits_backup_${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`;
-  const userPath = `${common_vendor.index.env.USER_DATA_PATH}/backups`;
-  try {
-    try {
-      fs.accessSync(userPath);
-    } catch (e) {
-      fs.mkdirSync(userPath, true);
-    }
-    fs.writeFileSync(`${userPath}/${fileName}`, JSON.stringify(backup), "utf8");
-    cleanupOldBackups(fs, userPath);
-  } catch (error) {
-    common_vendor.index.__f__("error", "at utils/storage.js:58", "保存备份文件失败:", error);
-  }
-}
-function cleanupOldBackups(fs, backupPath) {
-  try {
-    const files = fs.readdirSync(backupPath);
-    const backupFiles = files.filter((f) => f.startsWith("habits_backup_"));
-    if (backupFiles.length > 5) {
-      backupFiles.sort().slice(0, backupFiles.length - 5).forEach((file) => {
-        try {
-          fs.unlinkSync(`${backupPath}/${file}`);
-        } catch (e) {
-          common_vendor.index.__f__("error", "at utils/storage.js:77", "删除旧备份文件失败:", e);
-        }
-      });
-    }
-  } catch (error) {
-    common_vendor.index.__f__("error", "at utils/storage.js:82", "清理旧备份失败:", error);
-  }
-}
 function restoreFromBackup(options = { mode: "full" }) {
   try {
     const backup = common_vendor.index.getStorageSync(BACKUP_KEY);
@@ -103,16 +41,16 @@ function restoreFromFile(options = { mode: "full" }) {
     };
   }
 }
-function restoreData(backupData2, options = { mode: "full" }) {
+function restoreData(backupData, options = { mode: "full" }) {
   try {
     const currentHabits = common_vendor.index.getStorageSync("habits") || [];
     let restoredHabits = [];
     switch (options.mode) {
       case "full":
-        restoredHabits = backupData2;
+        restoredHabits = backupData;
         break;
       case "merge":
-        restoredHabits = mergeHabits(currentHabits, backupData2);
+        restoredHabits = mergeHabits(currentHabits, backupData);
         break;
       default:
         throw new Error("不支持的恢复模式");
@@ -203,7 +141,6 @@ function checkBackupAvailable() {
     };
   }
 }
-exports.checkAutoBackup = checkAutoBackup;
 exports.checkBackupAvailable = checkBackupAvailable;
 exports.restoreFromBackup = restoreFromBackup;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/utils/storage.js.map

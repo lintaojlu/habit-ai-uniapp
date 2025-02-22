@@ -28,7 +28,7 @@
     {
       "path": "pages/add-habit/add-habit",
       "style": {
-        "navigationBarTitleText": "添加习惯",
+        "navigationBarTitleText": "HabitAI",
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black",
         "usingComponents": {}
@@ -37,7 +37,7 @@
     {
       "path": "pages/overview/overview",
       "style": {
-        "navigationBarTitleText": "习惯总览",
+        "navigationBarTitleText": "HabitAI",
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black",
         "usingComponents": {}
@@ -46,10 +46,16 @@
     {
       "path": "pages/settings/settings",
       "style": {
-        "navigationBarTitleText": "设置",
+        "navigationBarTitleText": "HabitAI",
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black",
         "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/guide/guide",
+      "style": {
+        "navigationBarTitleText": "HabitAI"
       }
     }
   ],

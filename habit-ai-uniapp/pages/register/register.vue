@@ -8,19 +8,9 @@
 
     <view class="avatar-section">
       <button class="avatar-wrapper" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
-        <image class="avatar" :src="userInfo.avatarUrl || defaultAvatarUrl" mode="aspectFill"/>
-        <text class="tip">点击更换头像</text>
+        <image class="avatar" :src="userInfo.avatar_url || defaultavatar_url" mode="aspectFill"/>
+        <text class="tip">点击选择头像</text>
       </button>
-      <view class="nickname-wrapper">
-        <text class="nickname-label">昵称</text>
-        <input
-            type="nickname"
-            class="nickname-input"
-            placeholder="请输入昵称"
-            @change="onNicknameChange"
-            v-model="userInfo.nickName"
-        />
-      </view>
     </view>
 
     <view class="form-section">
@@ -30,8 +20,8 @@
             type="nickname"
             class="input-field"
             placeholder="请输入昵称"
-            @change="onNicknameChange"
-            v-model="userInfo.nickName"
+            @change="onnicknameChange"
+            v-model="userInfo.nickname"
         />
       </view>
 
@@ -78,12 +68,12 @@
       </view>
 
       <view class="input-group">
-        <text class="label">内测码（选填）</text>
+        <text class="label">内测码</text>
         <input
             class="input-field"
             type="text"
             v-model="betaCode"
-            placeholder="如有内测码请输入"
+            placeholder="请输入内测码"
         />
       </view>
     </view>
@@ -95,15 +85,15 @@
 <script>
 import { apiService } from '@/utils/api.js'
 
-const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
+const defaultavatar_url = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
 
 export default {
   data() {
     return {
-      defaultAvatarUrl,
+      defaultavatar_url,
       userInfo: {
-        avatarUrl: '',
-        nickName: '',
+        avatar_url: '',
+        nickname: '',
         openId: ''
       },
       phone: '',
@@ -111,7 +101,7 @@ export default {
       betaCode: '',
       aiCharacters: [], // 添加 AI 角色列表
       selectedCharacterId: '', // 添加选中的角色 ID
-      aiCharacterName: '' // 修改默认值为空字符串
+      ai_character_name: '' // 修改默认值为空字符串
     }
   },
   
@@ -130,8 +120,8 @@ export default {
         desc: '用于完善用户资料',
         success: (res) => {
           this.userInfo = {
-            avatarUrl: res.userInfo.avatarUrl,
-            nickName: res.userInfo.nickName
+            avatar_url: res.userInfo.avatar_url,
+            nickname: res.userInfo.nickname
           }
 
           uni.showToast({
@@ -149,19 +139,20 @@ export default {
       })
     },
 
-    onNicknameChange(e) {
-      this.userInfo.nickName = e.detail.value
+    onnicknameChange(e) {
+      this.userInfo.nickname = e.detail.value
     },
 
     // 添加选择角色的方法
     selectRole(value) {
-      this.aiCharacterName = value
+      this.ai_character_name = value
     },
 
     async loadAICharacters() {
       try {
         const response = await apiService.getAICharacterList()
         if (response.status === 'success') {
+          console.log('AI 角色列表:', response.data)
           this.aiCharacters = response.data
           // 默认选中第一个角色
           if (this.aiCharacters.length > 0) {
@@ -181,13 +172,14 @@ export default {
 
     selectCharacter(character) {
       this.selectedCharacterId = character.character_id
-      this.aiCharacterName = character.name
+      this.ai_character_name = character.name
     },
 
     async onChooseAvatar(e) {
+      // 微信返回的是 avatarUrl，我们需要转换为 avatar_url
       const { avatarUrl } = e.detail
       // 直接设置头像 URL
-      this.userInfo.avatarUrl = avatarUrl
+      this.userInfo.avatar_url = avatarUrl
       console.log('选择的头像 URL:', avatarUrl)
     
       try {
@@ -207,7 +199,56 @@ export default {
     },
 
     async handleRegister() {
-      // ... 验证代码保持不变 ...
+      // 表单验证
+      if (!this.userInfo.nickname) {
+        uni.showToast({
+          title: '请输入昵称',
+          icon: 'none'
+        })
+        return
+      }
+    
+      if (!this.phone) {
+        uni.showToast({
+          title: '请输入手机号',
+          icon: 'none'
+        })
+        return
+      }
+    
+      // 验证手机号格式
+      const phoneReg = /^1[3-9]\d{9}$/
+      if (!phoneReg.test(this.phone)) {
+        uni.showToast({
+          title: '手机号格式不正确',
+          icon: 'none'
+        })
+        return
+      }
+    
+      if (!this.password) {
+        uni.showToast({
+          title: '请设置密码',
+          icon: 'none'
+        })
+        return
+      }
+    
+      if (!this.selectedCharacterId) {
+        uni.showToast({
+          title: '请选择AI角色',
+          icon: 'none'
+        })
+        return
+      }
+
+      if (!this.betaCode) {
+        uni.showToast({
+          title: '请输入内测码',
+          icon: 'none'
+        })
+        return
+      } 
     
       uni.showLoading({
         title: '注册中...'
@@ -217,21 +258,21 @@ export default {
         console.log('注册参数:', {
           telephone: this.phone,
           password: this.password,
-          nickname: this.userInfo.nickName,
-          avatar_url: this.userInfo.avatarUrl,
+          nickname: this.userInfo.nickname,
+          avatar_url: this.userInfo.avatar_url,
           wechat_openid: this.userInfo.openId,
           registration_code: this.betaCode,
-          ai_character_name: this.aiCharacterName
+          ai_character_name: this.ai_character_name
         })
     
         const res = await apiService.register({
           telephone: this.phone,
           password: this.password,
-          nickname: this.userInfo.nickName,
-          avatar_url: this.userInfo.avatarUrl,
+          nickname: this.userInfo.nickname,
+          avatar_url: this.userInfo.avatar_url,
           wechat_openid: this.userInfo.openId,
           registration_code: this.betaCode,
-          ai_character_name: this.aiCharacterName
+          ai_character_name: this.ai_character_name
         })
     
         console.log('注册响应:', res)
@@ -242,9 +283,9 @@ export default {
 
           // 保存用户信息
           this.userInfo.openId = res.openid
-          this.userInfo.nickName = this.userInfo.nickName
-          this.userInfo.avatarUrl = this.userInfo.avatarUrl
-          this.userInfo.aiCharacterName = this.aiCharacterName
+          this.userInfo.nickname = this.userInfo.nickname
+          this.userInfo.avatar_url = this.userInfo.avatar_url
+          this.userInfo.ai_character_name = this.ai_character_name
           uni.setStorageSync('userInfo', this.userInfo)
 
           // 保存 token 和用户 ID
@@ -264,8 +305,9 @@ export default {
           })
     
           setTimeout(() => {
-            uni.reLaunch({
-              url: '/pages/index/index'
+            // 在注册成功后的处理逻辑中
+            uni.redirectTo({
+              url: '/pages/guide/guide'
             })
           }, 1500)
         } else {
@@ -325,7 +367,6 @@ export default {
 .avatar-section {
   display: flex;
   justify-content: center;
-  margin-bottom: 60rpx;
 }
 
 .avatar-wrapper {
@@ -334,7 +375,10 @@ export default {
   padding: 0;
   margin: 0;
   width: 200rpx; /* 减小头像容器大小 */
-  height: 200rpx;
+  height: 280rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .avatar-wrapper:after {
@@ -344,14 +388,21 @@ export default {
 .avatar {
   width: 200rpx; /* 减小头像大小 */
   height: 200rpx;
-  border-radius: 50%; /* 保持圆形 */
+  border-radius: 50%;
+}
+
+/* 添加提示文字样式 */
+.tip {
+  display: block; /* 移除 display: none */
+  font-size: 24rpx;
+  color: #5c6b7a;
+  margin-top: 16rpx;
 }
 
 /* 移除不需要的样式 */
 .nickname-wrapper,
 .nickname-label,
-.nickname-input,
-.tip {
+.nickname-input {
   display: none;
 }
 
