@@ -261,7 +261,7 @@ const _sfc_main = {
         }
         this.selectedColor = habit.color || "#fff";
       } else {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:487", "Failed to find habit in storage:", {
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:493", "Failed to find habit in storage:", {
           searchId: this.habit_id,
           availableHabits: habits.map((h) => ({
             habit_id: h.habit_id,
@@ -369,7 +369,7 @@ const _sfc_main = {
                 ...habits[index],
                 ...habitData
               };
-              common_vendor.index.__f__("log", "at pages/add-habit/add-habit.vue:605", "Updated habit:", habits[index]);
+              common_vendor.index.__f__("log", "at pages/add-habit/add-habit.vue:611", "Updated habit:", habits[index]);
             }
           } else {
             habitData.habit_id = res.data.habit_id;
@@ -388,7 +388,7 @@ const _sfc_main = {
           throw new Error(res.message || "保存失败");
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:626", "Failed to save habit:", error);
+        common_vendor.index.__f__("error", "at pages/add-habit/add-habit.vue:632", "Failed to save habit:", error);
         common_vendor.index.showToast({
           title: error.message || "保存失败，请重试",
           icon: "none"
@@ -565,32 +565,33 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         f: index
       };
     }),
-    n: $data.reminderTimes.length < 5
+    n: $data.reminderTimes.length > 2 ? "300rpx" : "auto",
+    o: $data.reminderTimes.length < 5
   }, $data.reminderTimes.length < 5 ? {
-    o: common_vendor.o((...args) => $options.addTime && $options.addTime(...args))
+    p: common_vendor.o((...args) => $options.addTime && $options.addTime(...args))
   } : {}, {
-    p: common_vendor.o((...args) => $options.nextStep && $options.nextStep(...args))
+    q: common_vendor.o((...args) => $options.nextStep && $options.nextStep(...args))
   }) : {}, {
-    q: $data.currentStep === 2
+    r: $data.currentStep === 2
   }, $data.currentStep === 2 ? common_vendor.e({
-    r: common_vendor.o(($event) => $data.currentStep = 1),
-    s: common_vendor.t($data.habitName),
-    t: $data.searchQuery,
-    v: common_vendor.o(($event) => $data.searchQuery = $event.detail.value),
-    w: common_vendor.t($options.displayEmoji),
-    x: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
-    y: common_vendor.o((...args) => $options.showIconSettings && $options.showIconSettings(...args)),
-    z: common_vendor.t($data.matchedEmoji),
-    A: $data.showSettingsModal
+    s: common_vendor.o(($event) => $data.currentStep = 1),
+    t: common_vendor.t($data.habitName),
+    v: $data.searchQuery,
+    w: common_vendor.o(($event) => $data.searchQuery = $event.detail.value),
+    x: common_vendor.t($options.displayEmoji),
+    y: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
+    z: common_vendor.o((...args) => $options.showIconSettings && $options.showIconSettings(...args)),
+    A: common_vendor.t($data.matchedEmoji),
+    B: $data.showSettingsModal
   }, $data.showSettingsModal ? {
-    B: common_vendor.t($options.isValidEmoji($data.customEmoji) ? $data.customEmoji : $options.displayEmoji),
-    C: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
-    D: common_vendor.o([($event) => $data.customEmoji = $event.detail.value, (...args) => $options.checkEmojiInput && $options.checkEmojiInput(...args)]),
-    E: $data.customEmoji,
-    F: common_vendor.o([($event) => $data.customColor = $event.detail.value, (...args) => $options.validateColorInput && $options.validateColorInput(...args)]),
-    G: $data.customColor,
-    H: $options.isValidColor($data.customColor) ? $data.customColor : $data.selectedColor === "$theme-color" ? $data.themeColorHex : "#CCCCCC",
-    I: common_vendor.f($data.presetColors, (color, index, i0) => {
+    C: common_vendor.t($options.isValidEmoji($data.customEmoji) ? $data.customEmoji : $options.displayEmoji),
+    D: $data.selectedColor === "$theme-color" ? $data.themeColorHex : $data.selectedColor,
+    E: common_vendor.o([($event) => $data.customEmoji = $event.detail.value, (...args) => $options.checkEmojiInput && $options.checkEmojiInput(...args)]),
+    F: $data.customEmoji,
+    G: common_vendor.o([($event) => $data.customColor = $event.detail.value, (...args) => $options.validateColorInput && $options.validateColorInput(...args)]),
+    H: $data.customColor,
+    I: $options.isValidColor($data.customColor) ? $data.customColor : $data.selectedColor === "$theme-color" ? $data.themeColorHex : "#CCCCCC",
+    J: common_vendor.f($data.presetColors, (color, index, i0) => {
       return {
         a: color.value,
         b: common_vendor.t(color.name),
@@ -599,12 +600,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.selectColor(color.value), index)
       };
     }),
-    J: common_vendor.o((...args) => $options.resetSettings && $options.resetSettings(...args)),
-    K: common_vendor.o(($event) => $data.showSettingsModal = false),
-    L: common_vendor.o((...args) => $options.saveSettings && $options.saveSettings(...args))
+    K: common_vendor.o((...args) => $options.resetSettings && $options.resetSettings(...args)),
+    L: common_vendor.o(($event) => $data.showSettingsModal = false),
+    M: common_vendor.o((...args) => $options.saveSettings && $options.saveSettings(...args))
   } : {}, {
-    M: common_vendor.o((...args) => $options.completeHabitSetup && $options.completeHabitSetup(...args)),
-    N: common_vendor.f($options.filteredCategories, (categoryGroup, groupIndex, i0) => {
+    N: common_vendor.o((...args) => $options.completeHabitSetup && $options.completeHabitSetup(...args)),
+    O: common_vendor.f($options.filteredCategories, (categoryGroup, groupIndex, i0) => {
       return common_vendor.e({
         a: common_vendor.t(categoryGroup.group),
         b: groupIndex === 0

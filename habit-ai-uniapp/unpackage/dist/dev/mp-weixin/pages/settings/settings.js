@@ -21,7 +21,12 @@ const _sfc_main = {
       isClosingDown: false,
       isDragging: false,
       startY: 0,
-      currentY: 0
+      currentY: 0,
+      showWechatCard: false,
+      isWechatClosingDown: false,
+      isWechatDragging: false,
+      wechatStartY: 0,
+      wechatCurrentY: 0
     };
   },
   computed: {
@@ -46,9 +51,50 @@ const _sfc_main = {
   },
   onLoad() {
     this.loadUserInfo();
+    common_vendor.index.__f__("log", "at pages/settings/settings.vue:174", "[setting] userInfo:", this.userInfo);
     this.loadAICharacters();
   },
   methods: {
+    onWechat() {
+      this.showWechatCard = true;
+    },
+    handleWechatTouchStart(e) {
+      this.wechatStartY = e.touches[0].clientY;
+      this.isWechatDragging = true;
+      e.stopPropagation();
+    },
+    handleWechatTouchMove(e) {
+      if (!this.isWechatDragging)
+        return;
+      this.wechatCurrentY = e.touches[0].clientY;
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    handleWechatTouchEnd(e) {
+      if (!this.isWechatDragging)
+        return;
+      const dragDistance = this.wechatCurrentY - this.wechatStartY;
+      if (dragDistance > 100) {
+        this.closeWechatCard();
+      }
+      this.isWechatDragging = false;
+      this.wechatStartY = 0;
+      this.wechatCurrentY = 0;
+      e.stopPropagation();
+    },
+    closeWechatCard() {
+      this.isWechatClosingDown = true;
+      setTimeout(() => {
+        this.showWechatCard = false;
+        this.isWechatClosingDown = false;
+      }, 500);
+    },
+    showRolePicker() {
+      const picker = this.$refs.rolePicker;
+      if (picker) {
+        picker.$el.click();
+      }
+    },
     loadUserInfo() {
       const userInfo = common_vendor.index.getStorageSync("userInfo");
       if (userInfo) {
@@ -84,7 +130,7 @@ const _sfc_main = {
           }
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/settings/settings.vue:179", "加载AI角色失败:", error);
+        common_vendor.index.__f__("error", "at pages/settings/settings.vue:264", "加载AI角色失败:", error);
         common_vendor.index.showToast({
           title: "加载角色失败",
           icon: "none"
@@ -95,7 +141,7 @@ const _sfc_main = {
     },
     onPrivacy() {
       common_vendor.index.showToast({
-        title: "功能开发中",
+        title: "您的所有数据仅用于核心功能，不收集、不存储、不共享任何个人信息。",
         icon: "none"
       });
     },
@@ -150,6 +196,40 @@ const _sfc_main = {
         this.showQrCard = false;
         this.isClosingDown = false;
       }, 500);
+    },
+    async onRoleChange(e) {
+      const index = e.detail.value;
+      const newCharacter = this.aiCharacters[index];
+      try {
+        const response = await utils_api.apiService.updateUserInfo({
+          ai_character_name: newCharacter.name
+        });
+        if (response.status === "success") {
+          const userInfo = common_vendor.index.getStorageSync("userInfo");
+          userInfo.ai_character_name = newCharacter.name;
+          common_vendor.index.setStorageSync("userInfo", userInfo);
+          this.userInfo.ai_character_name = newCharacter.name;
+          this.selectedRoleIndex = index;
+          common_vendor.index.showToast({
+            title: "角色更新成功",
+            icon: "success"
+          });
+        } else {
+          throw new Error(response.message || "更新失败");
+        }
+      } catch (error) {
+        common_vendor.index.__f__("error", "at pages/settings/settings.vue:367", "更新角色失败:", error);
+        common_vendor.index.showToast({
+          title: error.message || "更新失败",
+          icon: "none"
+        });
+        const prevIndex = this.aiCharacters.findIndex(
+          (char) => char.name === this.userInfo.ai_character_name
+        );
+        if (prevIndex !== -1) {
+          this.selectedRoleIndex = prevIndex;
+        }
+      }
     }
   }
 };
@@ -160,24 +240,40 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     c: common_vendor.t($options.currentCharacterName),
     d: $data.selectedRoleIndex,
     e: $options.ai_character_names,
-    f: common_vendor.o((...args) => _ctx.onRoleChange && _ctx.onRoleChange(...args)),
-    g: common_vendor.o((...args) => $options.onPrivacy && $options.onPrivacy(...args)),
+    f: common_vendor.o((...args) => $options.onRoleChange && $options.onRoleChange(...args)),
+    g: common_vendor.o((...args) => $options.onWechat && $options.onWechat(...args)),
     h: common_vendor.o((...args) => $options.onFeedback && $options.onFeedback(...args)),
-    i: common_vendor.o((...args) => $options.onLogout && $options.onLogout(...args)),
-    j: $data.showQrCard
+    i: common_vendor.o((...args) => $options.onPrivacy && $options.onPrivacy(...args)),
+    j: common_vendor.o((...args) => $options.onLogout && $options.onLogout(...args)),
+    k: $data.showQrCard
   }, $data.showQrCard ? {
-    k: common_vendor.t($options.formattedDate),
-    l: common_assets._imports_0,
-    m: common_vendor.n($data.showQrCard && "slide-in"),
-    n: common_vendor.n($data.isClosingDown && "slide-out-down"),
-    o: common_vendor.n($data.isDragging && "dragging"),
-    p: common_vendor.s(_ctx.dragStyle),
-    q: common_vendor.o(() => {
+    l: common_vendor.t($options.formattedDate),
+    m: common_assets._imports_0,
+    n: common_vendor.n($data.showQrCard && "slide-in"),
+    o: common_vendor.n($data.isClosingDown && "slide-out-down"),
+    p: common_vendor.n($data.isDragging && "dragging"),
+    q: common_vendor.s(_ctx.dragStyle),
+    r: common_vendor.o(() => {
     }),
-    r: common_vendor.o((...args) => $options.handleTouchStart && $options.handleTouchStart(...args)),
-    s: common_vendor.o((...args) => $options.handleTouchMove && $options.handleTouchMove(...args)),
-    t: common_vendor.o((...args) => $options.handleTouchEnd && $options.handleTouchEnd(...args)),
-    v: common_vendor.o((...args) => $options.closeQrCard && $options.closeQrCard(...args))
+    s: common_vendor.o((...args) => $options.handleTouchStart && $options.handleTouchStart(...args)),
+    t: common_vendor.o((...args) => $options.handleTouchMove && $options.handleTouchMove(...args)),
+    v: common_vendor.o((...args) => $options.handleTouchEnd && $options.handleTouchEnd(...args)),
+    w: common_vendor.o((...args) => $options.closeQrCard && $options.closeQrCard(...args))
+  } : {}, {
+    x: $data.showWechatCard
+  }, $data.showWechatCard ? {
+    y: common_vendor.t($options.formattedDate),
+    z: common_assets._imports_1,
+    A: common_vendor.n($data.showWechatCard && "slide-in"),
+    B: common_vendor.n($data.isWechatClosingDown && "slide-out-down"),
+    C: common_vendor.n($data.isWechatDragging && "dragging"),
+    D: common_vendor.s(_ctx.wechatDragStyle),
+    E: common_vendor.o(() => {
+    }),
+    F: common_vendor.o((...args) => $options.handleWechatTouchStart && $options.handleWechatTouchStart(...args)),
+    G: common_vendor.o((...args) => $options.handleWechatTouchMove && $options.handleWechatTouchMove(...args)),
+    H: common_vendor.o((...args) => $options.handleWechatTouchEnd && $options.handleWechatTouchEnd(...args)),
+    I: common_vendor.o((...args) => $options.closeWechatCard && $options.closeWechatCard(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

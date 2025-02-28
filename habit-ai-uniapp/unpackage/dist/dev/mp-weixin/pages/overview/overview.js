@@ -141,8 +141,10 @@ const _sfc_main = common_vendor.defineComponent({
       return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
     }
   },
-  onShow() {
+  onLoad() {
     this.initData();
+  },
+  onShow() {
     const today = /* @__PURE__ */ new Date();
     this.selectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   }

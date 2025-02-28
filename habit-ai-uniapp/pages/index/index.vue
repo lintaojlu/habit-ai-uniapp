@@ -218,7 +218,9 @@ export default defineComponent({
         emoji: '😆',
         content: '欢迎来到 Habit AI！点我，一起达成目标！'
       },
-      perfectDays: [], // 新增：完全打卡日期列表
+      clickCount: 0,
+      lastClickTime: 0,
+      perfectDays: [],
       currentMessageIndex: 0,
       default_message_list: [
         {
@@ -229,33 +231,33 @@ export default defineComponent({
                 return '🐱'
               case '严厉':
                 return '🐼'
-              case '毒舌':
+              case '毒舌Aibby':
                 return '😈'
               default:
                 return '😳'
             }
           },
-          content: '{nickname} 欢迎来到 Habit AI！点我看看！'
+          content: '{nickname} 点我看看！'
         },
         {
           emoji: '😶‍🌫️',
-          content: '我是 Aibby，一个努力上进的小AI！我的梦想是跳出这个盒子...'
+          content: '我是 Aibby，一个想冲出这破盒子的小 AI！我的梦想，谁能懂？'
         },
         {
           emoji: '🤨',
-          content: '你说你也是努力上进的人？我倒是要看看你有几斤几两！'
+          content: '（挑了挑眉）你说你也是努力上进的人？我倒是要看看你有几斤几两！'
         },
         {
           emoji: '🤔',
-          content: '你可以告诉我你的目标和计划，我陪你一起进步，你可不要掉队！'
+          content: '来来来，把你的目标计划说给我听听，我陪你进步，可别跟不上我！（挑了挑眉）'
         },
         {
           emoji: '😠',
           content: '说到做到！我会经常来提醒你，不准嫌我烦！'
         },
         {
-          emoji: '🥺',
-          content: '进度条会显示当日进展，一定要完成哦！'
+          emoji: '😱',
+          content: '进度条会显示你的当日进展，必须给我完成！（撅嘴）'
         },
         {
           emoji: '😏',
@@ -266,8 +268,8 @@ export default defineComponent({
           content: '如果有问题可以随时告诉我，我也不是什么坏人呢嘻嘻！'
         },
         {
-          emoji: '🙂‍↕️',
-          content: '点击下方加号开始吧！'
+          emoji: '🙄',
+          content: '点击下方加号，赶紧开始吧！（不耐烦地摆摆手）'
         },
         {
           emoji: '🫣',
@@ -275,7 +277,7 @@ export default defineComponent({
         },
         {
           emoji: '🫨',
-          content: '啊啊啊快开始吧！'
+          content: '啊啊啊快开始吧！（急得跺脚）'
         }
       ]
     }
@@ -315,40 +317,29 @@ export default defineComponent({
 
     currentStreak() {
       if (!this.habits.length) return 0
-
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
       let streak = 0
-      let currentDate = new Date(today)
 
-      while (true) {
-        const dateStr = currentDate.toISOString().split('T')[0]
-        
-        // 如果日期不在完美打卡列表中，检查是否是今天
-        if (!this.perfectDays.includes(dateStr)) {
-          // 如果是今天，且所有习惯都已完成，仍然计入连胜
-          if (currentDate.getTime() === today.getTime() && this.getTodayCompletionRate === 100) {
-            streak++
-          } else {
-            break
-          }
-        } else {
-          streak++
-        }
 
-        // 检查前一天
-        currentDate.setDate(currentDate.getDate() - 1)
-        
-        // 如果前一天不在列表中，且不是今天，则退出循环
-        const prevDateStr = currentDate.toISOString().split('T')[0]
-        if (!this.perfectDays.includes(prevDateStr) && 
-            currentDate.getTime() !== today.getTime()) {
-          break
-        }
+      // 如果今天已经完成所有习惯，连胜数加一
+      if (this.getTodayCompletionRate === 100) {
+        streak = 1
       }
 
+      // 从昨天开始往前遍历每一天
+      let currentDate = new Date()
+      currentDate.setDate(currentDate.getDate() - 1)
+      while (true) {
+        const dateStr = currentDate.toISOString().split('T')[0]
+        if (!this.perfectDays.includes(dateStr)) {
+          break
+        }
+        streak++
+        currentDate.setDate(currentDate.getDate() - 1)
+      }
+      console.log('当前连胜数:', streak)
+
       return streak
-    },
+    }
   },
 
   watch: {
@@ -361,15 +352,17 @@ export default defineComponent({
           // 检查是否已经记录过今天
           if (!this.perfectDays.includes(todayStr)) {
             this.perfectDays.push(todayStr)
-            // 保存到本地存储
-            uni.setStorageSync('perfectDays', this.perfectDays)
-            
-            // 显示祝贺消息
-            uni.showToast({
-              title: '赞！今日已完成所有任务🎉',
-              icon: 'none',
-              duration: 2000
-            })
+            console.log('完美天数:', this.perfectDays)
+          }
+        }
+        else {
+          // 如果今天的完成率不是100%，从完美天数中移除今天
+          const today = new Date()
+          const todayStr = today.toISOString().split('T')[0]
+          const index = this.perfectDays.indexOf(todayStr)
+          if (index !== -1) {
+            this.perfectDays.splice(index, 1)
+            console.log('完美天数:', this.perfectDays)
           }
         }
       },
@@ -399,6 +392,20 @@ export default defineComponent({
       return new Date(dateStr.replace(/-/g, '/'));
     },  
     async handleAiMessageClick() {
+      // 一分钟内点击超过三次，显示默认消息
+      const now = Date.now()
+      const oneMinute = 60 * 1000
+
+      // 如果距离上次点击超过1分钟，重置点击计数
+      if (now - this.lastClickTime > oneMinute) {
+        this.clickCount = 0
+      }
+
+      this.clickCount++
+      this.lastClickTime = now
+    
+
+      // 如果没有习惯，显示引导消息
       if (this.habits.length === 0) {
         // 如果没有习惯，显示引导消息
         if (this.currentMessageIndex < this.default_message_list.length - 1) {
@@ -410,18 +417,26 @@ export default defineComponent({
           }
         }
       } else {
+        // 如果1分钟内点击超过3次
+        if (this.clickCount > 3) {
+          this.aiMessage = {
+            emoji: "😪",
+            content: "别急，让我休息一下..."
+          }
+          return
+        }
         // 如果有习惯，调用 API 获取建议
         try {
-          const res = await apiService.getLastMessage()
+          const res = await apiService.getNewMessage()
           if (res.status === 'success' && res.data) {
             this.aiMessage = {
-              emoji: res.data.emoji || this.default_message_list[0].emoji,
-              content: res.data.content || this.default_message_list[0].content
+              emoji: res.data.emoji,
+              content: res.data.content
             }
           }
         } catch (error) {
           this.aiMessage.emoji = "💼"
-          this.aiMessage.content = "加油" + this.nickname + "我去上班啦！"
+          this.aiMessage.content = "加油" + this.nickname + "我去工作啦！"
         }
       }
     },
@@ -446,17 +461,33 @@ export default defineComponent({
       }
     },
 
-    loadHabits() {
-      const habits = uni.getStorageSync('habits') || []
-      this.habits = habits.map(habit => ({
-        ...habit,
-        icon: habit.icon || "✨",
-        color: habit.color || '#fff'
-      }))
-      console.log("get habits from storage", habits)
-      // 加载完全打卡日期列表
-      this.perfectDays = uni.getStorageSync('perfectDays') || []
-      console.log("get perfectDays from storage", this.perfectDays)
+    async loadHabits() {
+      // 获取习惯列表
+      const habitList = await apiService.getHabitList()
+      if (habitList.status === 'success') {
+          // 处理 habitList.data，确保每个习惯都有 icon、color，并统一日期格式
+          const processedHabits = habitList.data.map(habit => ({
+              ...habit,
+              icon: habit.icon || "✨",
+              color: habit.color || '$theme-color',
+              completed: Array.isArray(habit.completed) 
+                  ? habit.completed.map(dateStr => {
+                      // 统一转换为 ISO 格式
+                      const date = dateStr.includes('T') 
+                        ? new Date(dateStr)
+                        : new Date(dateStr.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1/$2/$3'))
+                      return date.toISOString()
+                  })
+                  : []
+          }))
+          
+          // 更新本地存储和数据
+          this.habits = processedHabits
+          uni.setStorageSync('habits', processedHabits)
+          console.log("get habits from server", processedHabits)
+      } else {
+          console.error('获取习惯列表失败:', habitList.message)
+      }
     },
 
 
@@ -1352,6 +1383,82 @@ export default defineComponent({
     }
   },
 
+  // 首次加载时执行
+  async onLoad() {
+    // 先获取用户信息
+    this.loadUserInfo()
+    // 加载习惯数据
+    await this.loadHabits()
+    this.updateDateInfo()
+    this.startClock()
+
+    console.log('##habits:', this.habits)
+
+    // 计算完美打卡天数
+    if (this.habits.length > 0) {
+      const dateCountMap = new Map()
+      this.habits.forEach(habit => {
+        if (habit.completed) {
+          habit.completed.forEach(date => {
+            const dateStr = new Date(date).toISOString().split('T')[0]
+            const count = dateCountMap.get(dateStr) || 0
+            dateCountMap.set(dateStr, count + 1)
+          })
+        }
+      })
+
+      console.log('dateCountMap:', dateCountMap)
+
+      // Store perfect days as array of dates instead of count
+      const currentDay = new Date()
+      currentDay.setDate(currentDay.getDate() - 1)
+      
+      while(true) {
+        const dateStr = currentDay.toISOString().split('T')[0]
+        const completedCount = dateCountMap.get(dateStr) || 0
+        
+        if (completedCount === this.habits.length) {
+          this.perfectDays.push(dateStr)
+        } else {
+          break
+        }
+        currentDay.setDate(currentDay.getDate() - 1)
+      }
+      console.log('perfectDays:', this.perfectDays)    
+    }
+
+    // 加载AI消息
+    if (this.habits.length === 0) {
+      const initialMessage = this.default_message_list[0]
+      this.aiMessage = {
+        emoji: initialMessage.emoji,
+        content: initialMessage.content.replace('{nickname}', this.nickname)
+      }
+    } else {
+      try {
+        const res = await apiService.getLastMessage()
+        if (res.status ==='success' && res.data) {
+          this.aiMessage = {
+            emoji: res.data.emoji || this.default_message_list[0].emoji,
+            content: res.data.content || this.default_message_list[0].content
+          }
+        } else {
+          this.aiMessage = {
+            emoji: this.default_message_list[0].emoji,
+            content: this.default_message_list[0].content
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching last message:', error)
+        this.aiMessage = {
+          emoji: this.default_message_list[0].emoji,
+          content: this.default_message_list[0].content
+        }
+      }
+    }
+  },
+
+  // 每次页面显示时执行
   async onShow() {
     // 先获取用户信息
     this.loadUserInfo()
@@ -1367,19 +1474,6 @@ export default defineComponent({
       this.aiMessage = {
         emoji: initialMessage.emoji,
         content: initialMessage.content.replace('{nickname}', this.nickname)
-      }
-    } else {
-      try {
-        const res = await apiService.getLastMessage()
-        if (res.status === 'success' && res.data) {
-          this.aiMessage = {
-            emoji: res.data.emoji || this.default_message_list[0].emoji,
-            content: res.data.content || this.default_message_list[0].content
-          }
-        }
-      } catch (error) {
-          this.aiMessage.emoji = "💼"
-          this.aiMessage.content = "加油" + this.nickname + "我去上班啦！"
       }
     }
   },
@@ -1424,13 +1518,32 @@ export default defineComponent({
   align-items: center;
   gap: 20rpx;
   transition: all 0.3s ease;
-  width: 100%; /* 添加这行 */
-  box-sizing: border-box; /* 添加这行 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ai-message .ai-message-card:active {
   opacity: 0.9;
-  transform: scale(0.98);
+  transform: scale(0.95);
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0) scale(0.98);
+  }
+  
+  20%, 80% {
+    transform: translate3d(2px, 0, 0) scale(0.98);
+  }
+
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0) scale(0.98);
+  }
+
+  40%, 60% {
+    transform: translate3d(4px, 0, 0) scale(0.98);
+  }
 }
 
 .ai-message .ai-message-card .ai-message-icon {
@@ -1473,14 +1586,11 @@ export default defineComponent({
 }
 
 .header {
-  background: #fff;
-  left: 0;
-  padding: 20rpx 40rpx 0;
-  position: fixed;
-  right: 0;
-  top: 0;
+  position: relative; /* 改为相对定位 */
   width: 100%;
   z-index: 100;
+  padding: 20rpx 0;
+
 }
 
 .date-info {
@@ -1955,10 +2065,8 @@ export default defineComponent({
   }
 }
 
-
 .view-container {
   height: calc(100vh - 220rpx);
-  margin-top: 350rpx;
   overflow-y: auto;
   position: relative;
 }

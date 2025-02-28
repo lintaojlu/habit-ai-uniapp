@@ -26,12 +26,27 @@
   align-items: center;
   gap: 20rpx;
   transition: all 0.3s ease;
-  width: 100%; /* 添加这行 */
-  box-sizing: border-box; /* 添加这行 */
+  width: 100%;
+  box-sizing: border-box;
 }
 .ai-message .ai-message-card:active {
   opacity: 0.9;
-  transform: scale(0.98);
+  transform: scale(0.95);
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake {
+10%, 90% {
+    transform: translate3d(-1px, 0, 0) scale(0.98);
+}
+20%, 80% {
+    transform: translate3d(2px, 0, 0) scale(0.98);
+}
+30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0) scale(0.98);
+}
+40%, 60% {
+    transform: translate3d(4px, 0, 0) scale(0.98);
+}
 }
 .ai-message .ai-message-card .ai-message-icon {
   width: 80rpx;
@@ -70,14 +85,10 @@
   box-sizing: border-box;
 }
 .header {
-  background: #fff;
-  left: 0;
-  padding: 20rpx 40rpx 0;
-  position: fixed;
-  right: 0;
-  top: 0;
+  position: relative; /* 改为相对定位 */
   width: 100%;
   z-index: 100;
+  padding: 20rpx 0;
 }
 .date-info {
   align-items: center;
@@ -478,7 +489,6 @@
 }
 .view-container {
   height: calc(100vh - 220rpx);
-  margin-top: 350rpx;
   overflow-y: auto;
   position: relative;
 }

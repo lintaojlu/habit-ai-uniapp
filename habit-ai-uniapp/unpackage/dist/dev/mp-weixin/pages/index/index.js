@@ -38,8 +38,9 @@ const _sfc_main = common_vendor.defineComponent({
         emoji: "😆",
         content: "欢迎来到 Habit AI！点我，一起达成目标！"
       },
+      clickCount: 0,
+      lastClickTime: 0,
       perfectDays: [],
-      // 新增：完全打卡日期列表
       currentMessageIndex: 0,
       default_message_list: [
         {
@@ -50,33 +51,33 @@ const _sfc_main = common_vendor.defineComponent({
                 return "🐱";
               case "严厉":
                 return "🐼";
-              case "毒舌":
+              case "毒舌Aibby":
                 return "😈";
               default:
                 return "😳";
             }
           },
-          content: "{nickname} 欢迎来到 Habit AI！点我看看！"
+          content: "{nickname} 点我看看！"
         },
         {
           emoji: "😶‍🌫️",
-          content: "我是 Aibby，一个努力上进的小AI！我的梦想是跳出这个盒子..."
+          content: "我是 Aibby，一个想冲出这破盒子的小 AI！我的梦想，谁能懂？"
         },
         {
           emoji: "🤨",
-          content: "你说你也是努力上进的人？我倒是要看看你有几斤几两！"
+          content: "（挑了挑眉）你说你也是努力上进的人？我倒是要看看你有几斤几两！"
         },
         {
           emoji: "🤔",
-          content: "你可以告诉我你的目标和计划，我陪你一起进步，你可不要掉队！"
+          content: "来来来，把你的目标计划说给我听听，我陪你进步，可别跟不上我！（挑了挑眉）"
         },
         {
           emoji: "😠",
           content: "说到做到！我会经常来提醒你，不准嫌我烦！"
         },
         {
-          emoji: "🥺",
-          content: "进度条会显示当日进展，一定要完成哦！"
+          emoji: "😱",
+          content: "进度条会显示你的当日进展，必须给我完成！（撅嘴）"
         },
         {
           emoji: "😏",
@@ -87,8 +88,8 @@ const _sfc_main = common_vendor.defineComponent({
           content: "如果有问题可以随时告诉我，我也不是什么坏人呢嘻嘻！"
         },
         {
-          emoji: "🙂‍↕️",
-          content: "点击下方加号开始吧！"
+          emoji: "🙄",
+          content: "点击下方加号，赶紧开始吧！（不耐烦地摆摆手）"
         },
         {
           emoji: "🫣",
@@ -96,7 +97,7 @@ const _sfc_main = common_vendor.defineComponent({
         },
         {
           emoji: "🫨",
-          content: "啊啊啊快开始吧！"
+          content: "啊啊啊快开始吧！（急得跺脚）"
         }
       ]
     };
@@ -133,27 +134,21 @@ const _sfc_main = common_vendor.defineComponent({
     currentStreak() {
       if (!this.habits.length)
         return 0;
-      const today = /* @__PURE__ */ new Date();
-      today.setHours(0, 0, 0, 0);
       let streak = 0;
-      let currentDate = new Date(today);
+      if (this.getTodayCompletionRate === 100) {
+        streak = 1;
+      }
+      let currentDate = /* @__PURE__ */ new Date();
+      currentDate.setDate(currentDate.getDate() - 1);
       while (true) {
         const dateStr = currentDate.toISOString().split("T")[0];
         if (!this.perfectDays.includes(dateStr)) {
-          if (currentDate.getTime() === today.getTime() && this.getTodayCompletionRate === 100) {
-            streak++;
-          } else {
-            break;
-          }
-        } else {
-          streak++;
-        }
-        currentDate.setDate(currentDate.getDate() - 1);
-        const prevDateStr = currentDate.toISOString().split("T")[0];
-        if (!this.perfectDays.includes(prevDateStr) && currentDate.getTime() !== today.getTime()) {
           break;
         }
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
       }
+      common_vendor.index.__f__("log", "at pages/index/index.vue:339", "当前连胜数:", streak);
       return streak;
     }
   },
@@ -165,12 +160,15 @@ const _sfc_main = common_vendor.defineComponent({
           const todayStr = today.toISOString().split("T")[0];
           if (!this.perfectDays.includes(todayStr)) {
             this.perfectDays.push(todayStr);
-            common_vendor.index.setStorageSync("perfectDays", this.perfectDays);
-            common_vendor.index.showToast({
-              title: "赞！今日已完成所有任务🎉",
-              icon: "none",
-              duration: 2e3
-            });
+            common_vendor.index.__f__("log", "at pages/index/index.vue:355", "完美天数:", this.perfectDays);
+          }
+        } else {
+          const today = /* @__PURE__ */ new Date();
+          const todayStr = today.toISOString().split("T")[0];
+          const index = this.perfectDays.indexOf(todayStr);
+          if (index !== -1) {
+            this.perfectDays.splice(index, 1);
+            common_vendor.index.__f__("log", "at pages/index/index.vue:365", "完美天数:", this.perfectDays);
           }
         }
       },
@@ -192,6 +190,13 @@ const _sfc_main = common_vendor.defineComponent({
       return new Date(dateStr.replace(/-/g, "/"));
     },
     async handleAiMessageClick() {
+      const now = Date.now();
+      const oneMinute = 60 * 1e3;
+      if (now - this.lastClickTime > oneMinute) {
+        this.clickCount = 0;
+      }
+      this.clickCount++;
+      this.lastClickTime = now;
       if (this.habits.length === 0) {
         if (this.currentMessageIndex < this.default_message_list.length - 1) {
           this.currentMessageIndex++;
@@ -202,17 +207,24 @@ const _sfc_main = common_vendor.defineComponent({
           };
         }
       } else {
+        if (this.clickCount > 3) {
+          this.aiMessage = {
+            emoji: "😪",
+            content: "别急，让我休息一下..."
+          };
+          return;
+        }
         try {
-          const res = await utils_api.apiService.getLastMessage();
+          const res = await utils_api.apiService.getNewMessage();
           if (res.status === "success" && res.data) {
             this.aiMessage = {
-              emoji: res.data.emoji || this.default_message_list[0].emoji,
-              content: res.data.content || this.default_message_list[0].content
+              emoji: res.data.emoji,
+              content: res.data.content
             };
           }
         } catch (error) {
           this.aiMessage.emoji = "💼";
-          this.aiMessage.content = "加油" + this.nickname + "我去上班啦！";
+          this.aiMessage.content = "加油" + this.nickname + "我去工作啦！";
         }
       }
     },
@@ -230,20 +242,28 @@ const _sfc_main = common_vendor.defineComponent({
           this.nickname = "朋友";
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:444", "获取用户信息失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:459", "获取用户信息失败:", error);
         this.nickname = "朋友";
       }
     },
-    loadHabits() {
-      const habits = common_vendor.index.getStorageSync("habits") || [];
-      this.habits = habits.map((habit) => ({
-        ...habit,
-        icon: habit.icon || "✨",
-        color: habit.color || "#fff"
-      }));
-      common_vendor.index.__f__("log", "at pages/index/index.vue:456", "get habits from storage", habits);
-      this.perfectDays = common_vendor.index.getStorageSync("perfectDays") || [];
-      common_vendor.index.__f__("log", "at pages/index/index.vue:459", "get perfectDays from storage", this.perfectDays);
+    async loadHabits() {
+      const habitList = await utils_api.apiService.getHabitList();
+      if (habitList.status === "success") {
+        const processedHabits = habitList.data.map((habit) => ({
+          ...habit,
+          icon: habit.icon || "✨",
+          color: habit.color || "$theme-color",
+          completed: Array.isArray(habit.completed) ? habit.completed.map((dateStr) => {
+            const date = dateStr.includes("T") ? new Date(dateStr) : new Date(dateStr.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
+            return date.toISOString();
+          }) : []
+        }));
+        this.habits = processedHabits;
+        common_vendor.index.setStorageSync("habits", processedHabits);
+        common_vendor.index.__f__("log", "at pages/index/index.vue:487", "get habits from server", processedHabits);
+      } else {
+        common_vendor.index.__f__("error", "at pages/index/index.vue:489", "获取习惯列表失败:", habitList.message);
+      }
     },
     isCompletedForDay(habit, dayIndex) {
       if (!habit || !habit.completed || !Array.isArray(habit.completed)) {
@@ -344,7 +364,7 @@ const _sfc_main = common_vendor.defineComponent({
         if (res.status === "success") {
           const habits = common_vendor.index.getStorageSync("habits") || [];
           const habitIndex = habits.findIndex((h) => h.habit_id === habit.habit_id);
-          common_vendor.index.__f__("log", "at pages/index/index.vue:591", "record response", res);
+          common_vendor.index.__f__("log", "at pages/index/index.vue:622", "record response", res);
           if (habitIndex !== -1) {
             habits[habitIndex].completed = res.data.completed;
             habits[habitIndex].streak = res.data.streak;
@@ -470,7 +490,7 @@ const _sfc_main = common_vendor.defineComponent({
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("log", "at pages/index/index.vue:725", "ActionSheet 关闭", err);
+          common_vendor.index.__f__("log", "at pages/index/index.vue:756", "ActionSheet 关闭", err);
         }
       });
     },
@@ -561,7 +581,7 @@ const _sfc_main = common_vendor.defineComponent({
           duration: 1500
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:834", "保存心得体会失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:865", "保存心得体会失败:", error);
         common_vendor.index.showToast({
           title: "保存失败",
           icon: "none"
@@ -816,7 +836,7 @@ const _sfc_main = common_vendor.defineComponent({
               });
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1140", "Share file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:1171", "Share file error:", err);
               common_vendor.index.showToast({
                 title: "导出失败",
                 icon: "none"
@@ -824,14 +844,14 @@ const _sfc_main = common_vendor.defineComponent({
             }
           });
         } catch (err) {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1148", "File operation error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:1179", "File operation error:", err);
           common_vendor.index.showToast({
             title: "导出失败",
             icon: "none"
           });
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1155", "Export error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1186", "Export error:", error);
         common_vendor.index.showToast({
           title: "导出失败",
           icon: "none"
@@ -876,7 +896,7 @@ const _sfc_main = common_vendor.defineComponent({
           }
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1202", "Import error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1233", "Import error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -916,7 +936,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1248", "Merge error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1279", "Merge error:", error);
         common_vendor.index.showToast({
           title: "合并失败",
           icon: "none"
@@ -932,7 +952,7 @@ const _sfc_main = common_vendor.defineComponent({
           icon: "success"
         });
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:1265", "Overwrite error:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1296", "Overwrite error:", error);
         common_vendor.index.showToast({
           title: "导入失败",
           icon: "none"
@@ -982,7 +1002,7 @@ const _sfc_main = common_vendor.defineComponent({
                 }
                 this.performImport(importData);
               } catch (parseError) {
-                common_vendor.index.__f__("error", "at pages/index/index.vue:1317", "Parse error:", parseError);
+                common_vendor.index.__f__("error", "at pages/index/index.vue:1348", "Parse error:", parseError);
                 common_vendor.index.showToast({
                   title: "文件格式错误",
                   icon: "none"
@@ -990,7 +1010,7 @@ const _sfc_main = common_vendor.defineComponent({
               }
             },
             fail: (err) => {
-              common_vendor.index.__f__("error", "at pages/index/index.vue:1325", "Read file error:", err);
+              common_vendor.index.__f__("error", "at pages/index/index.vue:1356", "Read file error:", err);
               common_vendor.index.showToast({
                 title: "读取文件失败",
                 icon: "none"
@@ -999,7 +1019,7 @@ const _sfc_main = common_vendor.defineComponent({
           });
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/index/index.vue:1334", "Choose file error:", err);
+          common_vendor.index.__f__("error", "at pages/index/index.vue:1365", "Choose file error:", err);
           const systemInfo = common_vendor.index.getSystemInfoSync();
           const isIOS = systemInfo.platform === "ios";
           if (isIOS) {
@@ -1019,11 +1039,39 @@ const _sfc_main = common_vendor.defineComponent({
       });
     }
   },
-  async onShow() {
+  // 首次加载时执行
+  async onLoad() {
     this.loadUserInfo();
-    this.loadHabits();
+    await this.loadHabits();
     this.updateDateInfo();
     this.startClock();
+    common_vendor.index.__f__("log", "at pages/index/index.vue:1395", "##habits:", this.habits);
+    if (this.habits.length > 0) {
+      const dateCountMap = /* @__PURE__ */ new Map();
+      this.habits.forEach((habit) => {
+        if (habit.completed) {
+          habit.completed.forEach((date) => {
+            const dateStr = new Date(date).toISOString().split("T")[0];
+            const count = dateCountMap.get(dateStr) || 0;
+            dateCountMap.set(dateStr, count + 1);
+          });
+        }
+      });
+      common_vendor.index.__f__("log", "at pages/index/index.vue:1410", "dateCountMap:", dateCountMap);
+      const currentDay = /* @__PURE__ */ new Date();
+      currentDay.setDate(currentDay.getDate() - 1);
+      while (true) {
+        const dateStr = currentDay.toISOString().split("T")[0];
+        const completedCount = dateCountMap.get(dateStr) || 0;
+        if (completedCount === this.habits.length) {
+          this.perfectDays.push(dateStr);
+        } else {
+          break;
+        }
+        currentDay.setDate(currentDay.getDate() - 1);
+      }
+      common_vendor.index.__f__("log", "at pages/index/index.vue:1427", "perfectDays:", this.perfectDays);
+    }
     if (this.habits.length === 0) {
       const initialMessage = this.default_message_list[0];
       this.aiMessage = {
@@ -1038,11 +1086,33 @@ const _sfc_main = common_vendor.defineComponent({
             emoji: res.data.emoji || this.default_message_list[0].emoji,
             content: res.data.content || this.default_message_list[0].content
           };
+        } else {
+          this.aiMessage = {
+            emoji: this.default_message_list[0].emoji,
+            content: this.default_message_list[0].content
+          };
         }
       } catch (error) {
-        this.aiMessage.emoji = "💼";
-        this.aiMessage.content = "加油" + this.nickname + "我去上班啦！";
+        common_vendor.index.__f__("error", "at pages/index/index.vue:1452", "Error fetching last message:", error);
+        this.aiMessage = {
+          emoji: this.default_message_list[0].emoji,
+          content: this.default_message_list[0].content
+        };
       }
+    }
+  },
+  // 每次页面显示时执行
+  async onShow() {
+    this.loadUserInfo();
+    this.loadHabits();
+    this.updateDateInfo();
+    this.startClock();
+    if (this.habits.length === 0) {
+      const initialMessage = this.default_message_list[0];
+      this.aiMessage = {
+        emoji: initialMessage.emoji,
+        content: initialMessage.content.replace("{nickname}", this.nickname)
+      };
     }
   },
   onHide() {

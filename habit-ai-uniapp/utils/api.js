@@ -1,5 +1,6 @@
 // utils/api.js
-const baseURL = 'http://123.56.229.52:8000';
+const baseURL = 'http://123.56.229.52:9001';
+// const baseURL = 'https://www.tempoai.top'
 
 // Export the request function
 export function request(options) {
@@ -18,13 +19,6 @@ export function request(options) {
             },
             success: (res) => {
                 console.log(`[API Request] ${options.url} - ${options.method}`, options.data);
-
-                if (res.statusCode === 401) {
-                    console.log(`[API Response] ${options.url} - 401 Unauthorized`);
-                    uni.redirectTo({ url: '/pages/login/login' });
-                    reject(new Error('登录失败，请重新登录'));
-                    return;
-                }
                 
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     resolve(res.data);
@@ -133,16 +127,6 @@ export const apiService = {
             method: 'GET'
         });
     },
-    
-    getMemoryList(params = {}) {
-        const queryString = Object.entries(params)
-            .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-            .join('&');
-        return request({
-            url: `/habit-ai/memory/list${queryString ? '?' + queryString : ''}`,
-            method: 'GET'
-        });
-    },
 
     getLastMessage() {
         return request({
@@ -151,14 +135,10 @@ export const apiService = {
         });
     },
     
-    sendConversation(content, sessionId = '') {
+    getNewMessage() {
         return request({
-            url: '/habit-ai/ai/conversation',
-            method: 'POST',
-            data: {
-                content,
-                session_id: sessionId
-            }
+            url: '/habit-ai/message/new',
+            method: 'GET',
         });
     },
 

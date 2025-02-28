@@ -11,30 +11,30 @@
     </view>
 
     <!-- AI设置区域 -->
-    <view class="settings-card setting-item">
-      <view class="setting-left">
-        <text class="setting-icon">🤖</text>
-        <text class="setting-label">角色设置</text>
-      </view>
-      <picker 
-        ref="rolePicker"
-        class="role-picker" 
-        :value="selectedRoleIndex" 
-        :range="ai_character_names" 
-        @change="onRoleChange"
-      >
+    <picker 
+      ref="rolePicker"
+      class="role-picker" 
+      :value="selectedRoleIndex" 
+      :range="ai_character_names" 
+      @change="onRoleChange"
+    >
+      <view class="settings-card setting-item">
+        <view class="setting-left">
+          <text class="setting-icon">🤖</text>
+          <text class="setting-label">角色设置</text>
+        </view>
         <view class="picker-value">
           {{ currentCharacterName }}
           <text class="arrow">></text>
         </view>
-      </picker>
-    </view>
+      </view>
+    </picker>
 
-    <!-- 隐私设置 -->
-    <view class="settings-card setting-item" @tap="onPrivacy">
+    <!-- 添加微信选项 -->
+    <view class="settings-card setting-item" @tap="onWechat">
       <view class="setting-left">
-        <text class="setting-icon">🔒</text>
-        <text class="setting-label">隐私设置</text>
+        <text class="setting-icon">😈</text>
+        <text class="setting-label">添加微信</text>
       </view>
       <text class="arrow">></text>
     </view>
@@ -44,6 +44,15 @@
       <view class="setting-left">
         <text class="setting-icon">📢</text>
         <text class="setting-label">意见反馈</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <!-- 隐私设置 -->
+    <view class="settings-card setting-item" @tap="onPrivacy">
+      <view class="setting-left">
+        <text class="setting-icon">🔒</text>
+        <text class="setting-label">隐私设置</text>
       </view>
       <text class="arrow">></text>
     </view>
@@ -83,6 +92,33 @@
         </view>
       </view>
     </view>
+
+    <!-- 添加微信二维码卡片组件 -->
+    <view class="qr-card-container" v-if="showWechatCard" @tap="closeWechatCard">
+      <view class="qr-card" 
+        :class="[
+          showWechatCard && 'slide-in',
+          isWechatClosingDown && 'slide-out-down',
+          isWechatDragging && 'dragging'
+        ]" 
+        :style="wechatDragStyle"
+        @tap.stop
+        @touchstart="handleWechatTouchStart"
+        @touchmove="handleWechatTouchMove"
+        @touchend="handleWechatTouchEnd"
+      >
+        <view class="qr-date">{{ formattedDate }}</view>
+        <view class="qr-content">
+          <text class="qr-title">添加Aibby微信</text>
+          <image class="qr-image" src="/static/wechat_qr.png" mode="aspectFit"></image>
+          <text class="qr-desc">扫描二维码添加我的微信😈</text>
+        </view>
+        <view class="swipe-hint">
+          <text class="hint-text">下滑关闭</text>
+          <text class="arrow-icon">↓</text>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -105,7 +141,12 @@ export default {
       isClosingDown: false,
       isDragging: false,
       startY: 0,
-      currentY: 0
+      currentY: 0,
+      showWechatCard: false,
+      isWechatClosingDown: false,
+      isWechatDragging: false,
+      wechatStartY: 0,
+      wechatCurrentY: 0
     }
   },
 
@@ -130,10 +171,54 @@ export default {
 
   onLoad() {
     this.loadUserInfo()
+    console.log('[setting] userInfo:', this.userInfo)
     this.loadAICharacters()
   },
 
   methods: {
+    onWechat() {
+      this.showWechatCard = true
+    },
+
+    handleWechatTouchStart(e) {
+      this.wechatStartY = e.touches[0].clientY
+      this.isWechatDragging = true
+      e.stopPropagation()
+    },
+
+    handleWechatTouchMove(e) {
+      if (!this.isWechatDragging) return
+      this.wechatCurrentY = e.touches[0].clientY
+      e.preventDefault()
+      e.stopPropagation()
+    },
+
+    handleWechatTouchEnd(e) {
+      if (!this.isWechatDragging) return
+      const dragDistance = this.wechatCurrentY - this.wechatStartY
+      if (dragDistance > 100) {
+        this.closeWechatCard()
+      }
+      this.isWechatDragging = false
+      this.wechatStartY = 0
+      this.wechatCurrentY = 0
+      e.stopPropagation()
+    },
+
+    closeWechatCard() {
+      this.isWechatClosingDown = true
+      setTimeout(() => {
+        this.showWechatCard = false
+        this.isWechatClosingDown = false
+      }, 500)
+    },
+    showRolePicker() {
+      // 手动触发 picker 的点击事件
+      const picker = this.$refs.rolePicker
+      if (picker) {
+        picker.$el.click()
+      }
+    },
     loadUserInfo() {
       const userInfo = uni.getStorageSync('userInfo')
       if (userInfo) {
@@ -188,7 +273,7 @@ export default {
 
     onPrivacy() {
       uni.showToast({
-        title: '功能开发中',
+        title: '您的所有数据仅用于核心功能，不收集、不存储、不共享任何个人信息。',
         icon: 'none'
       })
     },
@@ -250,6 +335,49 @@ export default {
         this.showQrCard = false
         this.isClosingDown = false
       }, 500)
+    },
+    async onRoleChange(e) {
+      const index = e.detail.value
+      const newCharacter = this.aiCharacters[index]
+      
+      try {
+        // 调用接口更新角色
+        const response = await apiService.updateUserInfo({
+          ai_character_name: newCharacter.name
+        })
+
+        if (response.status === 'success') {
+          // 更新本地存储的用户信息
+          const userInfo = uni.getStorageSync('userInfo')
+          userInfo.ai_character_name = newCharacter.name
+          uni.setStorageSync('userInfo', userInfo)
+          
+          // 更新当前组件的数据
+          this.userInfo.ai_character_name = newCharacter.name
+          this.selectedRoleIndex = index
+
+          uni.showToast({
+            title: '角色更新成功',
+            icon: 'success'
+          })
+        } else {
+          throw new Error(response.message || '更新失败')
+        }
+      } catch (error) {
+        console.error('更新角色失败:', error)
+        uni.showToast({
+          title: error.message || '更新失败',
+          icon: 'none'
+        })
+        
+        // 恢复之前的选择
+        const prevIndex = this.aiCharacters.findIndex(
+          char => char.name === this.userInfo.ai_character_name
+        )
+        if (prevIndex !== -1) {
+          this.selectedRoleIndex = prevIndex
+        }
+      }
     }
   }
 }
