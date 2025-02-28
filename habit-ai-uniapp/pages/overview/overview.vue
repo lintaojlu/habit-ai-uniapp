@@ -248,8 +248,11 @@ export default defineComponent({
     }
   },
 
-  onShow() {
+  onLoad() {
     this.initData()
+  },
+
+  onShow() {
     const today = new Date()
     this.selectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   }

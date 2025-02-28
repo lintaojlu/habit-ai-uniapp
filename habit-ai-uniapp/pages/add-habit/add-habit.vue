@@ -18,7 +18,7 @@
           class="habit-input flag-input"
           v-model="habitFlag"
           maxlength="100"
-          placeholder="量化你的目标，例如：减重10公斤，获得马甲线！{{\n}}目标尽可能详细，AI需要数据才能了解你哦～🫰"
+          placeholder="你可以描述你的困惑或量化你的目标。例如：我的目标是不熬夜，我希望每天调整半小时，最终稳定11点睡觉。目标尽可能详细，AI需要数据才能了解你哦～🫰"
       />
       <view class="input-footer">
         <text class="counter">{{ habitFlag.length }}/100</text>
@@ -44,23 +44,29 @@
 
       <!-- 提醒时间选择 -->
       <view class="reminder-times">
-        <text class="reminder-title">设置提醒时间</text>
+      <text class="reminder-title">设置提醒时间</text>
+      <scroll-view 
+        scroll-y 
+        class="reminder-scroll"
+        :style="{ height: reminderTimes.length > 2 ? '300rpx' : 'auto' }"
+      >
         <view class="reminder-list">
           <view v-for="(time, index) in reminderTimes" :key="index" class="reminder-item">
-            <picker
-              mode="time"
-              :value="time"
-              @change="(e) => onTimeChange(e, index)"
-              class="time-picker"
-            >
-              <view class="time-display">
-                <text class="time">{{ time }}</text>
-                <text class="period">{{ getTimePeriod(time) }}</text>
-              </view>
-            </picker>
-            <text class="delete-time" @tap="deleteTime(index)">×</text>
+              <picker
+                mode="time"
+                :value="time"
+                @change="(e) => onTimeChange(e, index)"
+                class="time-picker"
+              >
+                <view class="time-display">
+                  <text class="time">{{ time }}</text>
+                  <text class="period">{{ getTimePeriod(time) }}</text>
+                </view>
+              </picker>
+              <text class="delete-time" @tap="deleteTime(index)">×</text>
+            </view>
           </view>
-        </view>
+        </scroll-view>
         <view class="add-time" @tap="addTime" v-if="reminderTimes.length < 5">
           <text class="add-icon">+</text>
           <text class="add-text">添加提醒时间</text>
@@ -796,20 +802,28 @@ export default {
 </script>
 
 <style>
-.reminder-times {
-  margin: 20rpx 0;
-}
 
 .reminder-title {
   font-size: 28rpx;
   color: #666;
   margin-bottom: 20rpx;
 }
+.reminder-times {
+  margin: 20rpx 0;
+  position: relative;
+  flex: none;
+}
+
+.reminder-scroll {
+  position: relative;
+  width: 100%;
+}
 
 .reminder-list {
   display: flex;
   flex-direction: column;
   gap: 20rpx;
+  padding: 10rpx;
 }
 
 .reminder-item {
@@ -818,6 +832,14 @@ export default {
   background-color: #f8f8f8;
   padding: 20rpx;
   border-radius: 12rpx;
+  margin: 0 2rpx;
+  flex-shrink: 0;
+}
+
+.step {
+  height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 160rpx; /* 为底部按钮留出空间 */
 }
 
 .time-picker {

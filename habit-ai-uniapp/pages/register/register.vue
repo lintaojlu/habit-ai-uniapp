@@ -289,15 +289,9 @@ export default {
           uni.setStorageSync('userInfo', this.userInfo)
 
           // 保存 token 和用户 ID
+          uni.setStorageSync('telephone', this.phone)
+          uni.setStorageSync('password', this.password)
           uni.setStorageSync('token', res.token)
-    
-          // // 获取用户详细信息
-          // const userInfo = await apiService.getUserInfo()
-          // console.log('获取用户信息:', userInfo)
-    
-          // if (userInfo.status === 'success') {
-          //   uni.setStorageSync('userInfo', userInfo.data)
-          // }
     
           uni.showToast({
             title: '注册成功',

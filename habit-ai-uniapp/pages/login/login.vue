@@ -3,7 +3,7 @@
     <view class="logo-section">
       <text class="emoji-logo">😈</text>
       <text class="app-name">HabitAI</text>
-      <text class="slogan">AI陪你努力生活！</text>
+      <text class="slogan">AI与你共同成长！</text>
     </view>
 
     <view class="form-section">
@@ -63,10 +63,7 @@ export default {
         })
         
         if (res.status === 'success') {
-          // 清空本地存储
-          uni.clearStorageSync();
-
-          // 保存 token 和用户信息
+          // 设置 token
           uni.setStorageSync('token', res.token)
           
           // 获取用户详细信息
@@ -107,6 +104,10 @@ export default {
             uni.setStorageSync('aiCharacters', response.data)
             console.log("get aiCharacters from server", response.data)
           }
+
+          // save telephone and password
+          uni.setStorageSync('telephone', this.telephone)
+          uni.setStorageSync('password', this.password)
               
           
           uni.showToast({

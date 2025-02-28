@@ -1,11 +1,11 @@
 <template>
   <view class="container">
     <view class="guide-content">
-      <image class="qr-code" src="/static/group_qr.png" mode="aspectFit"></image>
-      <text class="guide-title">一步之遥🎉</text>
-      <text class="guide-desc">扫描上方二维码，添加AI为好友\n它将帮助你更好地完成目标</text>
+      <image class="qr-code" src="/static/wechat_qr_2.png" mode="aspectFit"></image>
+      <text class="guide-title">截图保存，添加AI为好友🎉</text>
+      <text class="guide-desc">😈：我将帮助你更好地完成目标</text>
     </view>
-    <button class="complete-btn" @tap="handleComplete">完成添加</button>
+    <button class="complete-btn" @tap="handleComplete">稍后添加</button>
   </view>
 </template>
 

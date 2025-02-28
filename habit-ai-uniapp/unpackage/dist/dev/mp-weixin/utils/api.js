@@ -1,6 +1,6 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
-const baseURL = "http://123.56.229.52:8000";
+const baseURL = "http://123.56.229.52:9001";
 function request(options) {
   return new Promise((resolve, reject) => {
     const token = common_vendor.index.getStorageSync("token");
@@ -14,23 +14,17 @@ function request(options) {
         ...options.header
       },
       success: (res) => {
-        common_vendor.index.__f__("log", "at utils/api.js:20", `[API Request] ${options.url} - ${options.method}`, options.data);
-        if (res.statusCode === 401) {
-          common_vendor.index.__f__("log", "at utils/api.js:23", `[API Response] ${options.url} - 401 Unauthorized`);
-          common_vendor.index.redirectTo({ url: "/pages/login/login" });
-          reject(new Error("登录失败，请重新登录"));
-          return;
-        }
+        common_vendor.index.__f__("log", "at utils/api.js:21", `[API Request] ${options.url} - ${options.method}`, options.data);
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res.data);
         } else {
-          common_vendor.index.__f__("error", "at utils/api.js:32", `[API Response] ${options.url} - Failed:`, res);
+          common_vendor.index.__f__("error", "at utils/api.js:26", `[API Response] ${options.url} - Failed:`, res);
           reject(res.data || { message: "请求失败" });
         }
       },
       fail: (err) => {
-        common_vendor.index.__f__("log", "at utils/api.js:37", `[API Request] ${options.url} - ${options.method}`, options.data);
-        common_vendor.index.__f__("error", "at utils/api.js:38", `[API Response] ${options.url} - Error:`, err);
+        common_vendor.index.__f__("log", "at utils/api.js:31", `[API Request] ${options.url} - ${options.method}`, options.data);
+        common_vendor.index.__f__("error", "at utils/api.js:32", `[API Response] ${options.url} - Error:`, err);
         reject(err || { message: "网络错误" });
       }
     });
@@ -116,27 +110,16 @@ const apiService = {
       method: "GET"
     });
   },
-  getMemoryList(params = {}) {
-    const queryString = Object.entries(params).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join("&");
-    return request({
-      url: `/habit-ai/memory/list${queryString ? "?" + queryString : ""}`,
-      method: "GET"
-    });
-  },
   getLastMessage() {
     return request({
       url: `/habit-ai/message/last`,
       method: "GET"
     });
   },
-  sendConversation(content, sessionId = "") {
+  getNewMessage() {
     return request({
-      url: "/habit-ai/ai/conversation",
-      method: "POST",
-      data: {
-        content,
-        session_id: sessionId
-      }
+      url: "/habit-ai/message/new",
+      method: "GET"
     });
   },
   feedback(params) {

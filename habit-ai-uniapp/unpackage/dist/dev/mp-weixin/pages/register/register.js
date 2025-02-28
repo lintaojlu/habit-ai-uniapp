@@ -173,6 +173,8 @@ const _sfc_main = {
           this.userInfo.avatar_url = this.userInfo.avatar_url;
           this.userInfo.ai_character_name = this.ai_character_name;
           common_vendor.index.setStorageSync("userInfo", this.userInfo);
+          common_vendor.index.setStorageSync("telephone", this.phone);
+          common_vendor.index.setStorageSync("password", this.password);
           common_vendor.index.setStorageSync("token", res.token);
           common_vendor.index.showToast({
             title: "注册成功",
@@ -187,7 +189,7 @@ const _sfc_main = {
           throw new Error(res.message || "注册失败");
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/register/register.vue:317", "注册失败:", error);
+        common_vendor.index.__f__("error", "at pages/register/register.vue:311", "注册失败:", error);
         common_vendor.index.showToast({
           title: error.message || "注册失败",
           icon: "none"

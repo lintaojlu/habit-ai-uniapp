@@ -31,12 +31,11 @@ const _sfc_main = {
           password: this.password
         });
         if (res.status === "success") {
-          common_vendor.index.clearStorageSync();
           common_vendor.index.setStorageSync("token", res.token);
           const userInfo = await utils_api.apiService.getUserInfo();
           if (userInfo.status === "success") {
             common_vendor.index.setStorageSync("userInfo", userInfo.data);
-            common_vendor.index.__f__("log", "at pages/login/login.vue:76", "get userInfo from server", userInfo.data);
+            common_vendor.index.__f__("log", "at pages/login/login.vue:73", "get userInfo from server", userInfo.data);
           }
           const habitList = await utils_api.apiService.getHabitList();
           if (habitList.status === "success") {
@@ -51,13 +50,15 @@ const _sfc_main = {
             }));
             this.habits = processedHabits;
             common_vendor.index.setStorageSync("habits", processedHabits);
-            common_vendor.index.__f__("log", "at pages/login/login.vue:101", "get habits from server", processedHabits);
+            common_vendor.index.__f__("log", "at pages/login/login.vue:98", "get habits from server", processedHabits);
           }
           const response = await utils_api.apiService.getAICharacterList();
           if (response.status === "success") {
             common_vendor.index.setStorageSync("aiCharacters", response.data);
-            common_vendor.index.__f__("log", "at pages/login/login.vue:108", "get aiCharacters from server", response.data);
+            common_vendor.index.__f__("log", "at pages/login/login.vue:105", "get aiCharacters from server", response.data);
           }
+          common_vendor.index.setStorageSync("telephone", this.telephone);
+          common_vendor.index.setStorageSync("password", this.password);
           common_vendor.index.showToast({
             title: "登录成功",
             icon: "success"

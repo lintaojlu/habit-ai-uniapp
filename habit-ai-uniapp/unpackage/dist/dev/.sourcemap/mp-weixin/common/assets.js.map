@@ -1,1 +1,1 @@
-{"version":3,"file":"assets.js","sources":["static/group_qr.png"],"sourcesContent":["export default \"__VITE_ASSET__d5eff25e__\""],"names":[],"mappings":";AAAA,MAAe,aAAA;;"}
+{"version":3,"file":"assets.js","sources":["static/group_qr.png","static/wechat_qr.png","static/wechat_qr_2.png"],"sourcesContent":["export default \"__VITE_ASSET__d5eff25e__\"","export default \"__VITE_ASSET__79a760b1__\"","export default \"__VITE_ASSET__545c93c9__\""],"names":[],"mappings":";AAAA,MAAe,eAAA;ACAf,MAAe,aAAA;ACAf,MAAe,aAAA;;;;"}
